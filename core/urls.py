@@ -5,9 +5,9 @@ from django.urls import include, path
 from django.shortcuts import redirect
 
 
-admin.site.site_header = "Serpientes y Escaleras"
-admin.site.site_title = "Serpientes y Escaleras"
-admin.site.index_title = "Serpientes y Escaleras"
+admin.site.site_header = "ONIGIES"
+admin.site.site_title = "ONIGIES"
+admin.site.index_title = "ONIGIES"
 
 
 urlpatterns = [
