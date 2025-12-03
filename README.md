@@ -1,5 +1,4 @@
-# API y base de datos Serpientes y Escaleras (escaleras_survey_ws)
-The web services to store the reports about the subway stations or 
+# API y base de datos ONIGIES versión 3 (Observatorio Nacional para la Igualdad de Género en las Instituciones de Educación Superior) 
 
 ## Pasos iniciales:
 - Tener instalado Python 3, mínimo 3.13
@@ -15,7 +14,7 @@ The web services to store the reports about the subway stations or
 - Instalar venv
 - Crear en ambiente virtual, en este caso llamado 'escaleras' en la carpeta env:
 ```bash
-python3 -m venv ocamis
+python3 -m venv onigies
 ````
 
 - Iniciar el entorno virtual (venv) en la carpeta colocada
