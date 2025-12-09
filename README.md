@@ -99,11 +99,6 @@ python manage.py createsuperuser
 ### Cargar los datos iniciales
 
 ```bash
-python manage.py import_routes
-python manage.py import_stops
-python manage.py create_stations
-python manage.py import_stairs
-python manage.py recover_viz_features media/estaciones-match-stops.csv
 
 ```
 

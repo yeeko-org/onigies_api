@@ -1,14 +1,14 @@
 import os
-from typing import Optional, List
+from typing import List
 
 
 def getenv_list(
-        env_name: str, default: Optional[List[str]] = None
-) -> Optional[List[str]]:
+        env_name: str, default: List[str] = None
+) -> List[str]:
     env_value = os.getenv(env_name)
 
     if env_value is None:
-        return default
+        return default or []
 
     return [field.strip() for field in env_value.split(",")]
 

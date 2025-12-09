@@ -10,7 +10,7 @@ from rest_framework import permissions
 #     StopCatSerializer, StationCatSerializer,
 #     RouteCatSerializer,
 # )
-from django.db.models import OuterRef, Subquery
+# from django.db.models import OuterRef, Subquery
 
 # from stair.models import Stair
 # from report.models import StairReport

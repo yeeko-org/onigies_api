@@ -1,6 +1,5 @@
 import os
-from pathlib import Path
-from core.settings.get_env import getenv_bool, getenv_int, getenv_list
+from core.settings.get_env import getenv_bool, getenv_list
 from dotenv import load_dotenv
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
