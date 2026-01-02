@@ -6,7 +6,7 @@ class Axis(models.Model):
     number = models.IntegerField(blank=True, null=True)
     name = models.CharField(max_length=255, unique=True)
     slug = models.CharField(max_length=55, blank=True, null=True)
-    logo = models.ImageField(blob=True, upload_to='axis_logos/')
+    logo = models.ImageField(blank=True, null=True, upload_to='axis_logos')
     color = models.CharField(max_length=55)
     hex_color = models.CharField(max_length=7, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
@@ -31,8 +31,12 @@ class Component(models.Model):
 
 class Observable(models.Model):
 
+    component = models.ForeignKey(Component, on_delete=models.CASCADE)
+
     number = models.DecimalField(max_digits=4, decimal_places=2)
     name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+
     init_question = models.TextField(blank=True, null=True)
     a_main_question = models.TextField(
         blank=True, null=True,
@@ -40,8 +44,22 @@ class Observable(models.Model):
     a_main_subtitle = models.TextField(
         blank=True, null=True,
         verbose_name="Subtítulo institucionalización")
-    description = models.TextField(blank=True, null=True)
-    component = models.ForeignKey(Component, on_delete=models.CASCADE)
+
+    a_weight = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        verbose_name="Ponderación institucionalización")
+    b_weight = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        verbose_name="Ponderación cumplimiento")
+    pop_weight = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00,
+        verbose_name="Ponderación población")
+    plan_weight = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00,
+        verbose_name="Ponderación de planes")
+    special_weight = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00,
+        verbose_name="Ponderación especial")
 
     def __str__(self):
         return f"{self.name} ({self.component.name})"
@@ -51,3 +69,13 @@ class Observable(models.Model):
         verbose_name_plural = "Observables"
 
 
+class Sector(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    needs_name = models.BooleanField(default=False)
+    order = models.IntegerField(default=0)
+    is_main = models.BooleanField(
+        default=True, verbose_name="Es sector principal")
+
+    def __unicode__(self):
+        return self.name

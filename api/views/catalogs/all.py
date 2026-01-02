@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
 
-# from profile_auth.models import User
+# from ies.models import User
 # from api.views.auth.serializers import UserProfileSerializer
 
 # from stop.models import Stop, Station, Route

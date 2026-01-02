@@ -1,0 +1,46 @@
+
+¿Las preguntas pueden cambiar a lo largo de los años?
+
+Me refiero a:
+- La redacción de las preguntas
+- Agregar/quitar componentes y observables
+- Cambiar las ponderaciones
+- Nombre de los componentes / observables
+
+
+¿Cuál será el ciclo completo de flujo de trabajo?
+
+Sugiero que primero se aprueben los datos base, antes de comenzar a responder las preguntas.
+
+
+¿Se solicitarán archivos comprobantes para la primera parte?
+- Estructuras
+- Poblaciones atendidas
+- Tamaños de población
+- Planes de Estudio
+- Forma de gobierno
+
+¿Se hará un sistema de comentarios para cada una de estas secciones o una general?
+
+OBSERVABLES:
+
+¿Agregamos un campo opcional para explicar o justificar la respuesta, o dejamos que lo pongan en comentarios?
+
+Pregunta específica (¿tiene varias respuestas?)
+
+Los mecanismos y criterios existentes están formalizados y son vinculantes para toda la universidad, especificar:
+Ingreso
+Permanencia
+Fortalecimiento de las trayectorias
+Evaluación
+Egreso
+Titulación
+
+
+
+BUENAS PRÁCTICAS:
+
+¿Usaremos el sistema de comentarios e intercambios?
+
+¿Cuál será el flujo de aprobación/retroalimentación de las buenas prácticas?
+

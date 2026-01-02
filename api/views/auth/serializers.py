@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from profile_auth.models import User
+from ies.models import User
 
 
 class UserRegistrationSerializer(serializers.Serializer):

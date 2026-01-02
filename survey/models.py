@@ -1,12 +1,7 @@
 from django.db import models
 
-from indicator.models import Observable
-from question.models import (
-    PopulationQuestion, AQuestion, AOption, BQuestion)
-from ies.models import Institution
-from workflux.models import Period, StatusControl
-from pop.models import Sector
-from profile_auth.models import User
+from indicator.models import Axis, Component, Sector
+from ies.models import Institution, Period
 
 
 class Survey(models.Model):
@@ -22,11 +17,11 @@ class Survey(models.Model):
     sectors = models.ManyToManyField(
         Sector, related_name='surveys',
         verbose_name='Sectores atendidos')
-    plans_media = models.IntegerField(
+    media_plans = models.IntegerField(
         verbose_name='Planes a nivel medio superior')
-    plans_superior = models.IntegerField(
+    superior_plans = models.IntegerField(
         verbose_name='Planes a nivel superior')
-    plans_postgraduate = models.IntegerField(
+    postgraduate_plans = models.IntegerField(
         verbose_name='Planes a nivel posgrado')
 
     def __str__(self):
@@ -38,11 +33,36 @@ class Survey(models.Model):
         verbose_name_plural = 'Conjuntos de respuestas IES-Año'
 
 
-OBSERVABLE_OPTIONS = (
-    ('sí', 'Sí'),
-    ('no', 'No'),
-    # ('partial', 'Parcialmente'),
-)
+class AxisValue(models.Model):
+    survey = models.ForeignKey(
+        Survey, on_delete=models.CASCADE, related_name='axis_values')
+    axis = models.ForeignKey(
+        Axis, on_delete=models.CASCADE, related_name='axis_values')
+    value = models.DecimalField(
+        max_digits=5, decimal_places=2, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.axis.name}: {self.value}"
+
+    class Meta:
+        verbose_name = 'Valor del eje'
+        verbose_name_plural = 'Valores de los ejes'
+
+
+class ComponentValue(models.Model):
+    survey = models.ForeignKey(
+        Survey, on_delete=models.CASCADE, related_name='component_values')
+    component = models.ForeignKey(
+        Component, on_delete=models.CASCADE, related_name='component_values')
+    value = models.DecimalField(
+        max_digits=5, decimal_places=2, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.component.name}: {self.value}"
+
+    class Meta:
+        verbose_name = 'Valor del componente'
+        verbose_name_plural = 'Valores de los componentes'
 
 
 class PopulationQuantity(models.Model):
@@ -63,137 +83,3 @@ class PopulationQuantity(models.Model):
     class Meta:
         verbose_name = 'Cantidad de población por sector'
         verbose_name_plural = 'Cantidades de población por sector'
-
-
-class ObservableResponse(models.Model):
-
-    survey = models.ForeignKey(
-        Survey, on_delete=models.CASCADE, related_name='observable_responses')
-    observable = models.ForeignKey(
-        Observable, on_delete=models.CASCADE, related_name='responses')
-    value = models.CharField(
-        max_length=10, choices=OBSERVABLE_OPTIONS,
-        verbose_name='Valor de la respuesta')
-
-    def __str__(self):
-        return f"Response to '{self.observable.name}'"
-
-    class Meta:
-        verbose_name = 'Respuesta observable'
-        verbose_name_plural = 'Respuestas observables'
-
-
-class PopulationResponse(models.Model):
-    survey = models.ForeignKey(
-        Survey, on_delete=models.CASCADE, related_name='population_responses')
-    question = models.ForeignKey(
-        PopulationQuestion, on_delete=models.CASCADE, related_name='responses')
-    not_focalized = models.BooleanField(
-        verbose_name='No focalizado en sectores específicos',
-        default=False)
-    sectors = models.ManyToManyField(
-        Sector, related_name='population_responses', blank=True)
-
-    def __str__(self):
-        return f"Response to '{self.question.text}'"
-
-    class Meta:
-        verbose_name = 'Respuesta de población'
-        verbose_name_plural = 'Respuestas de población'
-
-
-class AResponse(models.Model):
-    survey = models.ForeignKey(
-        Survey, on_delete=models.CASCADE, related_name='a_question_responses')
-    question = models.ForeignKey(
-        AQuestion, on_delete=models.CASCADE, related_name='responses')
-    selected_option = models.ForeignKey(
-        AOption, on_delete=models.CASCADE,
-        related_name='a_responses')
-
-    def __str__(self):
-        return f"Response to '{self.question.text}'"
-
-    class Meta:
-        verbose_name = 'Respuesta a pregunta A'
-        verbose_name_plural = 'Respuestas a preguntas A'
-
-
-class BResponse(models.Model):
-    survey = models.ForeignKey(
-        Survey, on_delete=models.CASCADE, related_name='b_question_responses')
-    question = models.ForeignKey(
-        BQuestion, on_delete=models.CASCADE, related_name='responses')
-
-    def __str__(self):
-        return f"Response to '{self.question.text}'"
-
-    class Meta:
-        verbose_name = 'Respuesta a pregunta B'
-        verbose_name_plural = 'Respuestas a preguntas B'
-
-
-    status_validation = models.ForeignKey(
-        StatusControl, on_delete=models.CASCADE,
-        related_name='a_responses')
-
-
-class GenericResponse(models.Model):
-    a_response = models.ForeignKey(
-        AResponse, on_delete=models.CASCADE, related_name='generic_responses')
-    b_response = models.ForeignKey(
-        BResponse, on_delete=models.CASCADE, related_name='generic_responses')
-    population_response = models.ForeignKey(
-        PopulationResponse, on_delete=models.CASCADE,
-        related_name='generic_responses')
-    value = models.TextField(verbose_name='Valor de la respuesta')
-    status_validation = models.ForeignKey(
-        StatusControl, on_delete=models.CASCADE,
-        related_name='generic_responses')
-
-    def __str__(self):
-        return f"Generic Response ID {self.id}"
-
-    class Meta:
-        verbose_name = 'Respuesta genérica'
-        verbose_name_plural = 'Respuestas genéricas'
-
-
-class Attachment(models.Model):
-    generic_response = models.ForeignKey(
-        GenericResponse, on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='comment_attachments/')
-
-    def __str__(self):
-        return f"Attachment for response ID {self.generic_response.id}"
-
-    class Meta:
-        verbose_name = 'Adjunto de comentario'
-        verbose_name_plural = 'Adjuntos de comentarios'
-
-
-class Comment(models.Model):
-    # a_response = models.ForeignKey(
-    #     AResponse, on_delete=models.CASCADE,
-    #     blank=True, null=True, related_name='comments')
-    # population_response = models.ForeignKey(
-    #     PopulationResponse, on_delete=models.CASCADE,
-    #     blank=True, null=True, related_name='comments')
-    generic_response = models.ForeignKey(
-        GenericResponse, on_delete=models.CASCADE,
-        related_name='comments')
-    text = models.TextField(verbose_name='Texto del comentario')
-    status_validation = models.ForeignKey(
-        StatusControl, on_delete=models.CASCADE,
-        related_name='a_responses')
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='comments')
-
-    # def __str__(self):
-    #     return f"Comentario by {self.user.username} on response ID {self.a_response.id}"
-
-    class Meta:
-        verbose_name = 'Comentario de encuesta'
-        verbose_name_plural = 'Comentarios de encuestas'
-
-

@@ -1,0 +1,2544 @@
+
+Ayúdame a mejorar mi description.txt de mi plataforma y a responder algunas preguntas que tengo, así como a hacerme preguntas que puedan ayudar al arranque del proyecto.
+
+``` description.txt:
+Estoy construyendo una plataforma y una base de datos para un observatorio igualdad de género para las Instituciones de Educación Superior en México (IES). Más de 200 instituciones participarán y la plataforma debe soportar 10 años de mediciones de esas instituciones.
+
+Para el backend, utilizo PostgreSQL, Django y Django Rest Framework.
+
+Cada IES deberá registrar (para cada año) cada una de sus poblaciones dividida en 12 sectores distintos.
+También cada IES deberá responder:
+-El número de instancias académicas
+-El número de instancias administrativas
+-A qué grupos atienden con sus políticas de género (12 sectores + 3 población en general)
+-El número de planes de estudio para cada uno de los 3 niveles: media superior, superior y posgrado (3 preguntas).
+-El número de hombres y el número de mujeres en cada uno de los 12 sectores.
+   - Adicionalmente, si la persona titular de la IES es mujer u hombre.
+
+La complejidad radica en la cantidad de preguntas y su organización. Existen 4 materias, 11 componentes y 41 observables.
+
+Cada uno de los observables tiene siempre:
+
+-Una pregunta de entrada (para saber si se responderán las preguntas de los groups del observable)
+
+-En promedio 10 preguntas base (AQuestion) cualitativas que deben responderse con las mismas 3 o 6 opciones de respuesta (las cuales aún no están definidas y que pueden ser 3 o 6 opciones, según la escala que se elija en el futuro). Estas preguntas ayudarán a definir el valor de "institucionalización" [group_1]
+
+Los siguientes grupos de preguntas ayudarán a definir el valor de "transversalización" o "Bquestion":
+
+-Una pregunta para la cantidad de instancias académicas y la cantidad de intancias administrativas que cumplen la pregunta (Bquestion) [group_2]
+-Una pregunta para señalar a qué grupos o sectores (de los 13 que podría atender) atiende el observable específico. Unas cuantas de estas preguntas se limitan a sectores académicos o a autoridades (especificado en cada pregunta); Dos observables preguntan previo a esta pregunta si focalizan o no su política (con base en ello se preguntan los sectores o no). [group_3]
+
+Uno solo de los observables tiene 4 preguntas relativas al número de planes de estudio que cumplen la política observable:
+-Cada pregunta debe captar cuántos planes (para cada uno de los 3 tipos) cumplen la condición. (idealmente debemos guardar el porcentaje de cumplimiento para cada tipo, además de la cantidad). [group_4]
+
+Por último, existe un observable con una pregunta especial distinta, donde se pregunta "**¿Del total de proyectos de investigación financiados por la IES cuántos son dirigidos por mujeres?**", en este caso, se debe preguntar el número total de proyectos de investigación y el número de proyectos liderados por mujeres [group_5].
+
+Para cada uno de estos 5 grupos de preguntas (group_1, group_2, group_3 y group_4, group_5) existirá un ponderador del peso del grupo en el cálculo del valor del observable.
+
+En las respuestas de cada group, las instituciones podrán subir archivos adjuntos comprobables, así como comentarios (tanto del usuario de la IES como un usuario revisor)
+
+Los 12 sectores principales que he identificado son:
+
+Alumnado de nivel medio superior
+Alumnado de nivel licenciatura
+Alumnado de nivel posgrado
+Alumnado externo (de otras IES, intercambio o movilidad, servicio social, prácticas profesionales, voluntariado, etcétera)
+Posdoctorantes
+Personal académico de tiempo parcial / por horas / por asignatura (docencia, investigación)
+Personal académico de tiempo completo (docencia, investigación)
+Personal administrativo de base
+Personal administrativo de confianza
+Personal administrativo por honorarios
+Población externa (familias, proveedores, etcétera)
+Público en general (ex-alumnado y/o público asistente a actividades de extensión, artísticas, deportivas, etcétera).
+```
+
+El insumo principal que tengo es un cuestionario donde están todas y cada una de las preguntas, sin embargo, quiero ayuda para mejorar description.txt sin tener que poner la totalidad del cuestionario, en su lugar, quiero que me ayudes a identificar qué elementos importantes hacen falta para tener una mejor descripción del proyecto.
+
+MIS DUDAS EN LAS QUE REQUIERO AYUDA:
+
+Yo tengo un esquema de datos en modelos de Django que se aproxima a algunas soluciones, sin embargo, tengo algunas dudas importantes que tengo son:
+
+¿Es mejor tener un solo modelo para todos los tipos de pregunta (o groups) o que cada tipo de pregunta tenga su propio modelo? Esta duda es por los elementos como "adjuntos", "comentarios", "ponderadores", etcétera, que se repiten y se comportarían idéntico entre los grupos. En esos caso, no sé si deban hacerse por medio de mixins o es mejor hacer un solo modelo genérico.
+
+¿Qué variables, tablas o elementos me podrían estar faltando en los modelos de Django que llevo hasta ahora construídos?
+
+¿Qué otras posibilidades existen para modelar las preguntas y respuestas de manera eficiente en Django y PostgreSQL para este caso específico?
+
+No reproduzcas en tu respuesta todas las preguntas del cuestionario inicial, será en otro momento que te pregunte cómo inicializar los valores de los modelos, pero antes quiero asegurarme de que la estructura de los modelos es la ideal.
+
+No olvides hacerme preguntas para que pueda entender mejor el proyecto y ayudarte a mejorar la estructura de datos.
+
+
+``` TODOS LOS ARCHIVOS models.py (los que llevo hasta ahora):
+========================================
+\ies\models.py
+
+from django.db import models
+
+
+class Institution(models.Model):
+
+    name = models.CharField(max_length=255, help_text="Nombre completo")
+    logo = models.ImageField(upload_to="ies")
+    acronym = models.CharField(max_length=50, help_text="Siglas únicas")
+    year_start = models.IntegerField(default=2026)
+    year_end = models.IntegerField(blank=True, null=True)
+    is_public = models.BooleanField(
+        blank=True, null=True, help_text="Es una institución pública?")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Institución de Educación Superior"
+        verbose_name_plural = "Instituciones de Educación Superior"
+
+========================================
+\indicator\models.py
+
+from django.db import models
+
+
+class Axis(models.Model):
+    number = models.IntegerField(blank=True, null=True)
+    name = models.CharField(max_length=255, unique=True)
+    slug = models.CharField(max_length=55, blank=True, null=True)
+    logo = models.ImageField(blob=True, upload_to='axis_logos/')
+    color = models.CharField(max_length=55)
+    hex_color = models.CharField(max_length=7, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Materia (Axis)"
+        verbose_name_plural = "Materias (Axes)"
+
+
+class Component(models.Model):
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    axis = models.ForeignKey(Axis, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.name} ({self.axis.name})"
+
+
+class Observable(models.Model):
+
+    number = models.DecimalField(max_digits=4, decimal_places=2)
+    name = models.CharField(max_length=255)
+    init_question = models.TextField(blank=True, null=True)
+    a_main_question = models.TextField(
+        blank=True, null=True,
+        verbose_name="Pregunta institucionalización")
+    a_main_subtitle = models.TextField(
+        blank=True, null=True,
+        verbose_name="Subtítulo institucionalización")
+    description = models.TextField(blank=True, null=True)
+    component = models.ForeignKey(Component, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.name} ({self.component.name})"
+
+    class Meta:
+        verbose_name = "Observable"
+        verbose_name_plural = "Observables"
+
+
+
+========================================
+\pop\models.py
+
+from django.db import models
+
+
+class Sector(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    needs_name = models.BooleanField(default=False)
+    order = models.IntegerField(default=0)
+    is_generic = models.BooleanField(default=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+class Unity(models.Model):
+    # academic_entity, admin_entity, media plans, superior plans,
+    # postgraduate plans
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Unidad de medida"
+        verbose_name_plural = "Unidades de medida"
+
+
+========================================
+\profile_auth\models.py
+
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+
+
+class User(AbstractUser):
+    phone = models.CharField(max_length=100, blank=True)
+    full_editor = models.BooleanField(
+        default=False, verbose_name='Es capturista',
+        help_text='Puede agregar notas, comentarios a los registros,'
+                  'pero no tiene todos los permisos')
+    mini_editor = models.BooleanField(
+        default=False, verbose_name='Servicio social',
+        help_text='Puede modificar ubicaciones y otros detalles')
+
+    def get_full_name(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        if self.first_name or self.last_name:
+            return f"{self.first_name or self.last_name}"
+        return self.username or self.email
+
+    @property
+    def is_full_editor(self):
+        if self.is_anonymous:
+            return False
+        return self.is_superuser or self.is_staff or self.full_editor
+
+    @property
+    def is_admin(self):
+        if self.is_anonymous:
+            return False
+        return self.is_superuser or self.is_staff
+
+
+========================================
+\question\models.py
+
+from django.db import models
+
+from indicator.models import Observable
+from pop.models import Sector
+
+
+class AQuestion(models.Model):
+
+    text = models.TextField()
+    observable = models.ForeignKey(Observable, on_delete=models.CASCADE)
+    ponderation = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"Pregunta: {self.text} ({self.observable.name})"
+
+    class Meta:
+        verbose_name = "Pregunta de institucionalización"
+        verbose_name_plural = "Preguntas de institucionalización"
+
+
+class AOption(models.Model):
+    text = models.CharField(max_length=255)
+    value = models.IntegerField()
+
+    def __str__(self):
+        return f"Opción de respuesta: {self.text} (Valor: {self.value})"
+
+    class Meta:
+        verbose_name = "Opción de respuesta de institucionalización"
+        verbose_name_plural = "Opciones de respuesta de institucionalización"
+
+
+class PopulationQuestion(models.Model):
+
+    text = models.TextField()
+    observable = models.ForeignKey(Observable, on_delete=models.CASCADE)
+    has_main_sectors = models.BooleanField(
+        default=True, verbose_name="Tiene los sectores principales")
+    others_sectors = models.ManyToManyField(Sector, blank=True)
+    has_general_planning = models.BooleanField(
+        default=False, verbose_name="Tiene la opción de planeación general")
+    ponderation = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"Pregunta población: {self.text} ({self.observable.name})"
+
+    class Meta:
+        verbose_name = "Pregunta de población"
+        verbose_name_plural = "Preguntas de población"
+
+
+class QuestionType(models.Model):
+    # plan, body, population, special
+    name = models.CharField(max_length=255)
+    response_format = models.CharField(max_length=255)
+    order = models.IntegerField(default=10)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Tipo de pregunta"
+        verbose_name_plural = "Tipos de preguntas"
+
+
+class BQuestion(models.Model):
+
+    observable = models.ForeignKey(Observable, on_delete=models.CASCADE)
+    order = models.IntegerField(default=10)
+    text = models.TextField()
+    ponderation = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00)
+    question_type = models.ForeignKey(QuestionType, on_delete=models.CASCADE)
+    includes_academic = models.BooleanField(
+        blank=True, null=True,
+        verbose_name="Incluye entidades académicas")
+    includes_admin = models.BooleanField(
+        blank=True, null=True,
+        verbose_name="Incluye dependencias administrativas")
+
+    def __str__(self):
+        return f"Pregunta cuerpo: {self.text} ({self.observable.name})"
+
+    class Meta:
+        verbose_name = "Pregunta de cuerpo"
+        verbose_name_plural = "Preguntas de cuerpo"
+
+
+class SpecialQuestion(models.Model):
+
+    text = models.TextField()
+    observable = models.ForeignKey(Observable, on_delete=models.CASCADE)
+    ponderation = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"Pregunta especial: {self.text} ({self.observable.name})"
+
+    class Meta:
+        verbose_name = "Pregunta especial"
+        verbose_name_plural = "Preguntas especiales"
+
+
+========================================
+\survey\models.py
+
+from django.db import models
+
+from indicator.models import Observable
+from question.models import (
+    PopulationQuestion, AQuestion, AOption, BQuestion)
+from ies.models import Institution
+from workflow.models import Period, StatusControl
+from pop.models import Sector
+from profile_auth.models import User
+
+
+class Survey(models.Model):
+
+    institution = models.ForeignKey(
+        Institution, on_delete=models.CASCADE, related_name='surveys')
+    period = models.ForeignKey(
+        Period, on_delete=models.CASCADE, related_name='surveys')
+    academic_instances = models.IntegerField(
+        verbose_name='Instancias académicas')
+    admin_instances = models.IntegerField(
+        verbose_name='Instancias administrativas')
+    sectors = models.ManyToManyField(
+        Sector, related_name='surveys',
+        verbose_name='Sectores atendidos')
+    plans_media = models.IntegerField(
+        verbose_name='Planes a nivel medio superior')
+    plans_superior = models.IntegerField(
+        verbose_name='Planes a nivel superior')
+    plans_postgraduate = models.IntegerField(
+        verbose_name='Planes a nivel posgrado')
+
+    def __str__(self):
+        return f"Survey for {self.institution.name} during {self.period.name}"
+
+    class Meta:
+        unique_together = ('institution', 'period')
+        verbose_name = 'Conjunto de respuestas IES-Año'
+        verbose_name_plural = 'Conjuntos de respuestas IES-Año'
+
+
+OBSERVABLE_OPTIONS = (
+    ('sí', 'Sí'),
+    ('no', 'No'),
+    # ('partial', 'Parcialmente'),
+)
+
+
+class PopulationQuantity(models.Model):
+    survey = models.ForeignKey(
+        Survey, on_delete=models.CASCADE, related_name='population_quantities')
+    sector = models.ForeignKey(
+        Sector, on_delete=models.CASCADE, related_name='population_quantities')
+    no_apply = models.BooleanField(default=False, verbose_name="No Aplica")
+    name = models.CharField(max_length=255, verbose_name='Nombre del sector')
+    number_men = models.PositiveIntegerField(
+        verbose_name='Número de hombres')
+    number_women = models.PositiveIntegerField(
+        verbose_name='Número de mujeres')
+
+    def __str__(self):
+        return f"{self.sector.name}: {self.number_men} hombres, {self.number_women} mujeres"
+
+    class Meta:
+        verbose_name = 'Cantidad de población por sector'
+        verbose_name_plural = 'Cantidades de población por sector'
+
+
+class ObservableResponse(models.Model):
+
+    survey = models.ForeignKey(
+        Survey, on_delete=models.CASCADE, related_name='observable_responses')
+    observable = models.ForeignKey(
+        Observable, on_delete=models.CASCADE, related_name='responses')
+    value = models.CharField(
+        max_length=10, choices=OBSERVABLE_OPTIONS,
+        verbose_name='Valor de la respuesta')
+
+    def __str__(self):
+        return f"Response to '{self.observable.name}'"
+
+    class Meta:
+        verbose_name = 'Respuesta observable'
+        verbose_name_plural = 'Respuestas observables'
+
+
+class PopulationResponse(models.Model):
+    survey = models.ForeignKey(
+        Survey, on_delete=models.CASCADE, related_name='population_responses')
+    question = models.ForeignKey(
+        PopulationQuestion, on_delete=models.CASCADE, related_name='responses')
+    not_focalized = models.BooleanField(
+        verbose_name='No focalizado en sectores específicos',
+        default=False)
+    sectors = models.ManyToManyField(
+        Sector, related_name='population_responses', blank=True)
+
+    def __str__(self):
+        return f"Response to '{self.question.text}'"
+
+    class Meta:
+        verbose_name = 'Respuesta de población'
+        verbose_name_plural = 'Respuestas de población'
+
+
+class AResponse(models.Model):
+    survey = models.ForeignKey(
+        Survey, on_delete=models.CASCADE, related_name='a_question_responses')
+    question = models.ForeignKey(
+        AQuestion, on_delete=models.CASCADE, related_name='responses')
+    selected_option = models.ForeignKey(
+        AOption, on_delete=models.CASCADE,
+        related_name='a_responses')
+
+    def __str__(self):
+        return f"Response to '{self.question.text}'"
+
+    class Meta:
+        verbose_name = 'Respuesta a pregunta A'
+        verbose_name_plural = 'Respuestas a preguntas A'
+
+
+class BResponse(models.Model):
+    survey = models.ForeignKey(
+        Survey, on_delete=models.CASCADE, related_name='b_question_responses')
+    question = models.ForeignKey(
+        BQuestion, on_delete=models.CASCADE, related_name='responses')
+
+    def __str__(self):
+        return f"Response to '{self.question.text}'"
+
+    class Meta:
+        verbose_name = 'Respuesta a pregunta B'
+        verbose_name_plural = 'Respuestas a preguntas B'
+
+
+    status_validation = models.ForeignKey(
+        StatusControl, on_delete=models.CASCADE,
+        related_name='a_responses')
+
+
+class GenericResponse(models.Model):
+    a_response = models.ForeignKey(
+        AResponse, on_delete=models.CASCADE, related_name='generic_responses')
+    b_response = models.ForeignKey(
+        BResponse, on_delete=models.CASCADE, related_name='generic_responses')
+    population_response = models.ForeignKey(
+        PopulationResponse, on_delete=models.CASCADE,
+        related_name='generic_responses')
+    value = models.TextField(verbose_name='Valor de la respuesta')
+    status_validation = models.ForeignKey(
+        StatusControl, on_delete=models.CASCADE,
+        related_name='generic_responses')
+
+    def __str__(self):
+        return f"Generic Response ID {self.id}"
+
+    class Meta:
+        verbose_name = 'Respuesta genérica'
+        verbose_name_plural = 'Respuestas genéricas'
+
+
+class Attachment(models.Model):
+    generic_response = models.ForeignKey(
+        GenericResponse, on_delete=models.CASCADE, related_name='attachments')
+    file = models.FileField(upload_to='comment_attachments/')
+
+    def __str__(self):
+        return f"Attachment for response ID {self.generic_response.id}"
+
+    class Meta:
+        verbose_name = 'Adjunto de comentario'
+        verbose_name_plural = 'Adjuntos de comentarios'
+
+
+class Comment(models.Model):
+    # a_response = models.ForeignKey(
+    #     AResponse, on_delete=models.CASCADE,
+    #     blank=True, null=True, related_name='comments')
+    # population_response = models.ForeignKey(
+    #     PopulationResponse, on_delete=models.CASCADE,
+    #     blank=True, null=True, related_name='comments')
+    generic_response = models.ForeignKey(
+        GenericResponse, on_delete=models.CASCADE,
+        related_name='comments')
+    text = models.TextField(verbose_name='Texto del comentario')
+    status_validation = models.ForeignKey(
+        StatusControl, on_delete=models.CASCADE,
+        related_name='a_responses')
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='comments')
+
+    # def __str__(self):
+    #     return f"Comentario by {self.user.username} on response ID {self.a_response.id}"
+
+    class Meta:
+        verbose_name = 'Comentario de encuesta'
+        verbose_name_plural = 'Comentarios de encuestas'
+
+
+========================================
+\workflow\models.py
+
+from django.db import models
+
+
+class Period(models.Model):
+    year = models.IntegerField(primary_key=True, help_text="Año")
+    published_date = models.DateField(
+        help_text="Fecha de publicación del periodo", null=True, blank=True)
+
+
+GROUP_CHOICES = [
+    ("register", "Registro"),
+    ("validation", "Validación"),
+]
+
+ROLE_CHOICES = [
+    ("validator", "Validador"),
+    ("ies", "Institución"),
+]
+
+
+class StatusControl(models.Model):
+    name = models.CharField(max_length=120, primary_key=True)
+    group = models.CharField(
+        max_length=10, choices=GROUP_CHOICES,
+        verbose_name="grupo de status", default="petition")
+    public_name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    color = models.CharField(
+        max_length=30, blank=True, null=True,
+        help_text="https://vuetifyjs.com/en/styles/colors/")
+    icon = models.CharField(
+        max_length=40, blank=True, null=True,
+        help_text="https://fonts.google.com/icons")
+    order = models.IntegerField(default=4)
+
+    is_final = models.BooleanField(default=False)
+
+    send_ies = models.BooleanField(default=False)
+    strict_ies = models.BooleanField(default=False)
+    send_admin = models.BooleanField(default=False)
+    role = models.CharField(
+        max_length=10, choices=ROLE_CHOICES,
+        verbose_name="rol asociado", default="ies")
+    # is_public = models.BooleanField(default=True)
+
+    is_deleted = models.BooleanField(default=False)
+    priority = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.group} - {self.public_name}"
+
+    class Meta:
+        ordering = ["group", "order"]
+        verbose_name = "Status de control"
+        verbose_name_plural = "Status de control (TODOS)"
+
+```
+
+``` CUESTIONARIO INICIAL:
+
+**Observatorio Nacional para la Igualdad de Género en las Instituciones de Educación Superior**
+
+**Actualización metodológica 2024**
+
+**Cuestionario específico**
+
+Actualización al 30 ago 2025
+
+Contenido
+
+[**Esquema metodológico general	4**](#esquema-metodológico-general)
+
+[**Información de base	6**](#información-de-base)
+
+[Estructuras	6](#estructuras)
+
+[Poblaciones	6](#poblaciones)
+
+[Planes de estudio	7](#planes-de-estudio)
+
+[Forma de gobierno	7](#forma-de-gobierno)
+
+[**Lista de verificación de los observables que responderá la IES	7**](#lista-de-verificación-de-los-observables-que-responderá-la-ies)
+
+[**Cuestionario	11**](#cuestionario)
+
+[**Eje de políticas de igualdad sustantiva, inclusión y cuidados corresponsables	11**](#eje-de-políticas-de-igualdad-sustantiva,-inclusión-y-cuidados-corresponsables)
+
+[1\. Materia: Igualdad de género	11](#materia:-igualdad-de-género)
+
+[Componente: Normas y políticas	11](#componente:-normas-y-políticas)
+
+[Observable 1.1. Proceso de armonización normativa	11](#observable-1.1.-proceso-de-armonización-normativa)
+
+[Observable 1.2 Norma principal de carácter general que integra la igualdad de género	13](#observable-1.2-norma-principal-de-carácter-general-que-integra-la-igualdad-de-género)
+
+[Observable 1.3 Normas y disposiciones para la igualdad de género	15](#observable-1.3-normas-y-disposiciones-para-la-igualdad-de-género)
+
+[Observable 1.4 Planeación institucional para la igualdad de género	17](#observable-1.4-planeación-institucional-para-la-igualdad-de-género)
+
+[Componente: Estructuras organizacionales	19](#componente:-estructuras-organizacionales)
+
+[Observable 1.5 Estructuras para la igualdad de género	19](#observable-1.5-estructuras-para-la-igualdad-de-género)
+
+[Observable 1.6 Principio de paridad de género en la normatividad	21](#observable-1.6-principio-de-paridad-de-género-en-la-normatividad)
+
+[Observable 1.7 Integración paritaria	22](#observable-1.7-integración-paritaria)
+
+[Componente: Procesos y recursos institucionales	25](#componente:-procesos-y-recursos-institucionales)
+
+[Observable 1.8 Estadísticas y diagnósticos con perspectiva de género	25](#observable-1.8-estadísticas-y-diagnósticos-con-perspectiva-de-género)
+
+[Observable 1.9 Programas y actividades de sensibilización, concientización y capacitación en igualdad de género	27](#observable-1.9-programas-y-actividades-de-sensibilización,-concientización-y-capacitación-en-igualdad-de-género)
+
+[Observable 1.10 Presupuestos institucionales para la igualdad de género	29](#observable-1.10-presupuestos-institucionales-para-la-igualdad-de-género)
+
+[Observable 1.11. Evaluaciones en igualdad de género / características de los observables	31](#observable-1.11.-evaluaciones-en-igualdad-de-género-/-características-de-los-observables)
+
+[Componente: Procesos y recursos académicos	33](#componente:-procesos-y-recursos-académicos)
+
+[Observable 1.12 Planes y programas de estudio, y asignaturas para la igualdad de género y con perspectiva de género (docencia)	33](#observable-1.12-planes-y-programas-de-estudio,-y-asignaturas-para-la-igualdad-de-género-y-con-perspectiva-de-género-\(docencia\))
+
+[Observable 1.13 Formación docente con perspectiva de género	35](#observable-1.13-formación-docente-con-perspectiva-de-género)
+
+[Observable 1.14 Investigación académica con perspectiva de género	37](#observable-1.14-investigación-académica-con-perspectiva-de-género)
+
+[Observable 1.15 Mecanismos y criterios de evaluación y promoción académica (docencia e investigación) para la igualdad y no discriminación	39](#observable-1.15-mecanismos-y-criterios-de-evaluación-y-promoción-académica-\(docencia-e-investigación\)-para-la-igualdad-y-no-discriminación)
+
+[Observable 1.16 Mecanismos y criterios de ingreso, permanencia y evaluación estudiantil para la igualdad y no discriminación	40](#observable-1.16-mecanismos-y-criterios-de-ingreso,-permanencia-y-evaluación-estudiantil-para-la-igualdad-y-no-discriminación)
+
+[Observable 1.17. Evaluaciones académicas en materia de igualdad de género	42](#observable-1.17.-evaluaciones-académicas-en-materia-de-igualdad-de-género)
+
+[2\. Materia: Inclusión y no discriminación	44](#materia:-inclusión-y-no-discriminación)
+
+[Componente: Normas y políticas institucionales y académicas	44](#componente:-normas-y-políticas-institucionales-y-académicas)
+
+[Observable 2.1 Políticas institucionales para la inclusión	44](#observable-2.1-políticas-institucionales-para-la-inclusión)
+
+[Observable 2.2 Políticas institucionales y académicas de inclusión y no discriminación	46](#observable-2.2-políticas-institucionales-y-académicas-de-inclusión-y-no-discriminación)
+
+[Observable: 2.3 Mecanismos institucionales de reconocimiento de la diversidad sexo-genérica	48](#observable:-2.3-mecanismos-institucionales-de-reconocimiento-de-la-diversidad-sexo-genérica)
+
+[Observable 2.4 Lenguaje incluyente, no discriminatorio y no sexista	50](#observable-2.4-lenguaje-incluyente,-no-discriminatorio-y-no-sexista)
+
+[Componente: Procesos y recursos institucionales y académicos	52](#componente:-procesos-y-recursos-institucionales-y-académicos)
+
+[Observable 2.5 Programas y acciones institucionales de prevención primaria de la discriminación y la violencia	52](#observable-2.5-programas-y-acciones-institucionales-de-prevención-primaria-de-la-discriminación-y-la-violencia)
+
+[Observable 2.6 Programas y acciones institucionales de trabajo con hombres para la igualdad de género	54](#observable-2.6-programas-y-acciones-institucionales-de-trabajo-con-hombres-para-la-igualdad-de-género)
+
+[3\. Materia: Cuidados corresponsables	56](#materia:-cuidados-corresponsables)
+
+[Componente: Normas y políticas institucionales	56](#componente:-normas-y-políticas-institucionales)
+
+[Observable 3.1 Políticas institucionales para la corresponsabilidad de los cuidados	56](#observable-3.1-políticas-institucionales-para-la-corresponsabilidad-de-los-cuidados)
+
+[Componente: Procesos y recursos institucionales y académicos	59](#componente:-procesos-y-recursos-institucionales-y-académicos-1)
+
+[Observable 3.2 Licencias y permisos con perspectiva de género y de cuidados	59](#observable-3.2-licencias-y-permisos-con-perspectiva-de-género-y-de-cuidados)
+
+[Observable 3.3 Infraestructura para el acceso y ejercicio de cuidados en corresponsabilidad	61](#observable-3.3-infraestructura-para-el-acceso-y-ejercicio-de-cuidados-en-corresponsabilidad)
+
+[Observable 3.4 Servicios para el acceso y ejercicio de cuidados en corresponsabilidad	63](#observable-3.4-servicios-para-el-acceso-y-ejercicio-de-cuidados-en-corresponsabilidad)
+
+[**Eje de políticas de no discriminación y una vida libre de violencias	65**](#eje-de-políticas-de-no-discriminación-y-una-vida-libre-de-violencias)
+
+[4\. Materia: Una vida libre de discriminaciones y violencias	65](#4.-materia:-una-vida-libre-de-discriminaciones-y-violencias)
+
+[Componente: Normas y políticas institucionales	65](#componente:-normas-y-políticas-institucionales-1)
+
+[Observable 4.1. Proceso de armonización normativa	65](#observable-4.1.-proceso-de-armonización-normativa)
+
+[Observable 4.2 Legislación para la atención de casos de discriminación / violencia basada en el género	67](#observable-4.2-legislación-para-la-atención-de-casos-de-discriminación-/-violencia-basada-en-el-género)
+
+[Observable 4.3 Normas específicas para la atención de casos de discriminación / violencia basada en el género	69](#observable-4.3-normas-específicas-para-la-atención-de-casos-de-discriminación-/-violencia-basada-en-el-género)
+
+[Observable 4.4. Personas de primer contacto especializadas en materia de violencias de género	71](#observable-4.4.-personas-de-primer-contacto-especializadas-en-materia-de-violencias-de-género)
+
+[Observable 4.5 Políticas y medidas de prevención secundaria y terciaria de las discriminaciones / violencias basadas en el género enfocadas a las personas responsables de su ejercicio	73](#observable-4.5-políticas-y-medidas-de-prevención-secundaria-y-terciaria-de-las-discriminaciones-/-violencias-basadas-en-el-género-enfocadas-a-las-personas-responsables-de-su-ejercicio)
+
+[Componente: Estructuras institucionales	75](#componente:-estructuras-institucionales)
+
+[Observable 4.6 Estructuras especializadas para la atención de casos de discriminación / violencia basadas en el género	75](#observable-4.6-estructuras-especializadas-para-la-atención-de-casos-de-discriminación-/-violencia-basadas-en-el-género)
+
+[Observable 4.7 Puestos especializados para la atención de casos de discriminación / violencias basadas en el género	77](#observable-4.7-puestos-especializados-para-la-atención-de-casos-de-discriminación-/-violencias-basadas-en-el-género)
+
+[Observable 4.8 Servicios especializados para la atención de casos de discriminación / violencia basadas en el género	79](#observable-4.8-servicios-especializados-para-la-atención-de-casos-de-discriminación-/-violencia-basadas-en-el-género)
+
+[Observable 4.9 Responsabilidades de actuación para atender casos de discriminación y violencia basada en el género	81](#observable-4.9-responsabilidades-de-actuación-para-atender-casos-de-discriminación-y-violencia-basada-en-el-género)
+
+[Componente: Procesos y recursos institucionales	83](#componente:-procesos-y-recursos-institucionales-1)
+
+[Observable 4.10 Criterios de resolución y medidas de no repetición en el marco de la justicia restaurativa	83](#observable-4.10-criterios-de-resolución-y-medidas-de-no-repetición-en-el-marco-de-la-justicia-restaurativa)
+
+[Observable 4.11 Mecanismos de seguimiento de casos y cumplimiento de resoluciones	85](#observable-4.11-mecanismos-de-seguimiento-de-casos-y-cumplimiento-de-resoluciones)
+
+[Observable 4.12 Documentación, sistematización de información y transparencia	87](#observable-4.12-documentación,-sistematización-de-información-y-transparencia)
+
+[Observable 4.13 Evaluación de atención de procedimientos formales (quejas o denuncias) de atención de casos de violencias de género.	89](#observable-4.13-evaluación-de-atención-de-procedimientos-formales-\(quejas-o-denuncias\)-de-atención-de-casos-de-violencias-de-género.)
+
+[Observable 4.14 Evaluación de atención de mecanismo de atención de las violencias por razones de género	91](#observable-4.14-evaluación-de-atención-de-mecanismo-de-atención-de-las-violencias-por-razones-de-género)
+
+[**Sección buenas prácticas	92**](#sección-buenas-prácticas)
+
+[**Marco conceptual y normativo de la actualización metodológica ONIGIES	94**](#marco-conceptual-y-normativo-de-la-actualización-metodológica-onigies)
+
+#
+
+# **Esquema metodológico general** {#esquema-metodológico-general}
+
+El primer aspecto de la metodología es la recabación de información de base sobre las IES, principalmente en torno a sus estructuras internas, sus poblaciones que integran su comunidad y sus formas de gobierno interno.
+
+Posteriormente, la medición se realiza por **observable** y dos **variables**:
+
+|  Observable | Variable A: contenido del observable armonizado e institucionalizado |
+| :---- | :---- |
+|  | **Variable B:** transversalización del observable |
+
+El conjunto de observables conforman un listado, que **se estructura y se desagrega** de la siguiente manera:
+
+| Eje 1 |  |  |  |
+| ----- | ----- | ----- | ----- |
+| Materia ↳ ↳  |  Componente ↳ ↳ |  ***Listado de observables:** da lugar a un cuestionario inicial de preguntas “Sí/No”* ⇩ | *Para las respuestas afirmativas en el cuestionario inicial: da lugar a un cuestionario específico, para conocer si el observable: \- Cuenta con ciertas características sustantivas (variable A) \- Cuál es el alcance del observable (variable B)* ⇩ |
+|  |  |  |  |
+|  |  | **Observable ↳ ↳** | Variable A: contenido del observable armonizado e institucionalizado |
+|  |  |  | Variable B: transversalización del observable |
+|  |  | **Observable ↳ ↳** | Variable A: contenido del observable armonizado e institucionalizado |
+|  |  |  | Variable B: transversalización del observable |
+|  | Componente ↳ |  **Observable ↳ ↳** |  Variable A: contenido del observable armonizado e institucionalizado |
+|  |  |  | Variable B: transversalización del observable |
+| **Eje 2** |  |  |  |
+| … | … | … | … |
+
+#
+
+#
+
+# **Información de base** {#información-de-base}
+
+## **Estructuras** {#estructuras}
+
+**Por favor, señale el número de instancias académicas y administrativas reconocidas en el marco normativo y/u organigrama oficial de su institución.**
+
+| Tipo de estructura | Número de instancias centralizadas | Número de instancias descentralizadas  |
+| :---- | :---- | :---- |
+| Instancias académicas | 0  | 0  |
+| Instancias administrativas | 0 | 0 |
+
+## **Atención a Poblaciones** {#poblaciones}
+
+**Por favor, señale las poblaciones que integran a la comunidad de su IES, así como todas aquellas que están presentes física o virtualmente y/o mantiene vínculos a través de sus actividades institucionales.**
+
+| Tipo de población | Marcar |
+| :---- | :---- |
+| Alumnado de nivel medio superior | Sí |
+| Alumnado de nivel licenciatura | Sí |
+| Alumnado de nivel posgrado | Sí |
+| Alumnado externo (de otras IES, intercambio o movilidad, servicio social, prácticas profesionales, voluntariado, etcétera) | Sí |
+| Posdoctorantes | Sí |
+| Personal académico (docencia, investigación) de tiempo parcial / por horas / por asignatura | Sí |
+| Personal académico (docencia, investigación) de tiempo completo | Sí |
+| Personal administrativo de base | Sí |
+| Personal administrativo de confianza | Sí |
+| Personal administrativo por honorarios | Sí |
+| Población externa (familias, proveedores, etcétera) | Sí |
+| Público en general (ex-alumnado y/o público asistente a actividades de extensión, artísticas, deportivas, etcétera) | Sí |
+
+## **Poblaciones** {#poblaciones}
+
+**¿Cuál es la integración por sexo-género de las siguientes autoridades de la IES?**
+Titular de la IES: Mujer
+Máximo cuerpo colegiado de toda la IES: % Mujeres
+Titulares de instancias académicas: % Mujeres
+Titulares de instancias administrativas: % Mujeres
+
+**¿Cuál es la integración por sexo-género de las siguientes poblaciones de la IES?**
+Alumnado de nivel medio superior % Mujeres
+Alumnado de nivel licenciatura  % Mujeres
+Alumnado de nivel posgrado  % Mujeres
+Alumnado externo (de otras IES, intercambio o movilidad, servicio social, prácticas profesionales, voluntariado, etcétera)  % Mujeres
+Posdoctorantes % Mujeres
+Personal académico de tiempo parcial / por horas / por asignatura (docencia, investigación)  % Mujeres
+Personal académico de tiempo completo (docencia, investigación)  % Mujeres
+Personal administrativo de base  % Mujeres
+Personal administrativo de confianza  % Mujeres
+Personal administrativo por honorarios  % Mujeres
+
+## **Planes de estudio** {#planes-de-estudio}
+
+**Por favor, señale el número de planes de estudio vigentes en su institución, de acuerdo con el nivel de estudios**
+
+| Tipo de plan de estudios | Número |
+| :---- | :---- |
+| Planes de estudio nivel medio superior | 0 |
+| Planes de estudio nivel superior (licenciatura) | 0 |
+| Planes de estudio nivel posgrado (especialidad, maestría y doctorado) | 0 |
+
+## **Forma de gobierno** {#forma-de-gobierno}
+
+**Por favor, mencione las características que son parte de la forma de gobierno de su institución**
+
+| Característica | Marcar |
+| :---- | :---- |
+| Cuenta con una forma de gobierno descentralizada que da autonomía a las autoridades de cada instancia académica y/o administrativa | Sí |
+| Cuenta con una forma de gobierno centralizada que dota de facultades a su titular para emitir disposiciones vinculantes a todas las áreas académicas y administrativas | Sí |
+
+# **Lista de verificación de los observables que responderá la IES** {#lista-de-verificación-de-los-observables-que-responderá-la-ies}
+
+[1\. Materia: Igualdad de género](#materia:-igualdad-de-género)
+
+[Componente: Normas y políticas](#componente:-normas-y-políticas)
+
+[Observable 1.1. Proceso de armonización normativa](#observable-1.1.-proceso-de-armonización-normativa)
+
+[Observable 1.2 Norma principal de carácter general que integra la igualdad de género](#observable-1.2-norma-principal-de-carácter-general-que-integra-la-igualdad-de-género)
+
+[Observable 1.3 Normas y disposiciones para la igualdad de género](#observable-1.3-normas-y-disposiciones-para-la-igualdad-de-género)
+
+[Observable 1.4 Planeación institucional para la igualdad de género](#observable-1.4-planeación-institucional-para-la-igualdad-de-género)
+
+[Componente: Estructuras organizacionales](#componente:-estructuras-organizacionales)
+
+[Observable 1.5 Estructuras para la igualdad de género](#observable-1.5-estructuras-para-la-igualdad-de-género)
+
+[Observable 1.6 Principio de paridad de género en la normatividad](#observable-1.6-principio-de-paridad-de-género-en-la-normatividad)
+
+[Observable 1.7 Integración paritaria](#observable-1.7-integración-paritaria)
+
+[Componente: Procesos y recursos institucionales](#componente:-procesos-y-recursos-institucionales)
+
+[Observable 1.8 Estadísticas y diagnósticos con perspectiva de género](#observable-1.8-estadísticas-y-diagnósticos-con-perspectiva-de-género)
+
+[Observable 1.9 Programas y actividades de sensibilización, concientización y capacitación en igualdad de género](#observable-1.9-programas-y-actividades-de-sensibilización,-concientización-y-capacitación-en-igualdad-de-género)
+
+[Observable 1.10 Presupuestos institucionales para la igualdad de género](#observable-1.10-presupuestos-institucionales-para-la-igualdad-de-género)
+
+[Observable 1.11. Evaluaciones en igualdad de género / características de los observables](#observable-1.11.-evaluaciones-en-igualdad-de-género-/-características-de-los-observables)
+
+[Componente: Procesos y recursos académicos](#componente:-procesos-y-recursos-académicos)
+
+[Observable 1.12 Planes y programas de estudio, y asignaturas para la igualdad de género y con perspectiva de género (docencia)](#observable-1.12-planes-y-programas-de-estudio,-y-asignaturas-para-la-igualdad-de-género-y-con-perspectiva-de-género-\(docencia\))
+
+[Observable 1.13 Formación docente con perspectiva de género](#observable-1.13-formación-docente-con-perspectiva-de-género)
+
+[Observable 1.14 Investigación académica con perspectiva de género](#observable-1.14-investigación-académica-con-perspectiva-de-género)
+
+[Observable 1.15 Mecanismos y criterios de evaluación y promoción académica (docencia e investigación) para la igualdad y no discriminación](#observable-1.15-mecanismos-y-criterios-de-evaluación-y-promoción-académica-\(docencia-e-investigación\)-para-la-igualdad-y-no-discriminación)
+
+[Observable 1.16 Mecanismos y criterios de ingreso, permanencia y evaluación estudiantil para la igualdad y no discriminación](#observable-1.16-mecanismos-y-criterios-de-ingreso,-permanencia-y-evaluación-estudiantil-para-la-igualdad-y-no-discriminación)
+
+[Observable 1.17. Evaluaciones académicas en materia de igualdad de género](#observable-1.17.-evaluaciones-académicas-en-materia-de-igualdad-de-género)
+
+[2\. Materia: Inclusión y no discriminación](#materia:-inclusión-y-no-discriminación)
+
+[Componente: Normas y políticas institucionales y académicas](#componente:-normas-y-políticas-institucionales-y-académicas)
+
+[Observable 2.1 Políticas institucionales para la inclusión](#observable-2.1-políticas-institucionales-para-la-inclusión)
+
+[Observable 2.2 Políticas institucionales y académicas de inclusión y no discriminación](#observable-2.2-políticas-institucionales-y-académicas-de-inclusión-y-no-discriminación)
+
+[Observable: 2.3 Mecanismos institucionales de reconocimiento de la diversidad sexo-genérica](#observable:-2.3-mecanismos-institucionales-de-reconocimiento-de-la-diversidad-sexo-genérica)
+
+[Observable 2.4 Lenguaje incluyente, no discriminatorio y no sexista](#observable-2.4-lenguaje-incluyente,-no-discriminatorio-y-no-sexista)
+
+[Componente: Procesos y recursos institucionales y académicos](#componente:-procesos-y-recursos-institucionales-y-académicos)
+
+[Observable 2.5 Programas y acciones institucionales de prevención primaria de la discriminación y la violencia](#observable-2.5-programas-y-acciones-institucionales-de-prevención-primaria-de-la-discriminación-y-la-violencia)
+
+[Observable 2.6 Programas y acciones institucionales de trabajo con hombres para la igualdad de género](#observable-2.6-programas-y-acciones-institucionales-de-trabajo-con-hombres-para-la-igualdad-de-género)
+
+[3\. Materia: Cuidados corresponsables](#materia:-cuidados-corresponsables)
+
+[Componente: Normas y políticas institucionales](#componente:-normas-y-políticas-institucionales)
+
+[Observable 3.1 Políticas institucionales para la corresponsabilidad de los cuidados](#observable-3.1-políticas-institucionales-para-la-corresponsabilidad-de-los-cuidados)
+
+[Componente: Procesos y recursos institucionales y académicos](#componente:-procesos-y-recursos-institucionales-y-académicos-1)
+
+[Observable 3.2 Licencias y permisos con perspectiva de género y de cuidados](#observable-3.2-licencias-y-permisos-con-perspectiva-de-género-y-de-cuidados)
+
+[Observable 3.3 Infraestructura para el acceso y ejercicio de cuidados en corresponsabilidad](#observable-3.3-infraestructura-para-el-acceso-y-ejercicio-de-cuidados-en-corresponsabilidad)
+
+[Observable 3.4 Servicios para el acceso y ejercicio de cuidados en corresponsabilidad](#observable-3.4-servicios-para-el-acceso-y-ejercicio-de-cuidados-en-corresponsabilidad)
+
+[4\. Materia: Una vida libre de discriminaciones y violencias](#4.-materia:-una-vida-libre-de-discriminaciones-y-violencias)
+
+[Componente: Normas y políticas institucionales](#componente:-normas-y-políticas-institucionales-1)
+
+[Observable 4.1. Proceso de armonización normativa](#observable-4.1.-proceso-de-armonización-normativa)
+
+[Observable 4.2 Legislación para la atención de casos de discriminación / violencia basada en el género](#observable-4.2-legislación-para-la-atención-de-casos-de-discriminación-/-violencia-basada-en-el-género)
+
+[Observable 4.3 Normas específicas para la atención de casos de discriminación / violencia basada en el género](#observable-4.3-normas-específicas-para-la-atención-de-casos-de-discriminación-/-violencia-basada-en-el-género)
+
+[Observable 4.4. Personas de primer contacto especializadas en materia de violencias de género](#observable-4.4.-personas-de-primer-contacto-especializadas-en-materia-de-violencias-de-género)
+
+[Observable 4.5 Políticas y medidas de prevención secundaria y terciaria de las discriminaciones / violencias basadas en el género enfocadas a las personas responsables de su ejercicio](#observable-4.5-políticas-y-medidas-de-prevención-secundaria-y-terciaria-de-las-discriminaciones-/-violencias-basadas-en-el-género-enfocadas-a-las-personas-responsables-de-su-ejercicio)
+
+[Componente: Estructuras institucionales](#componente:-estructuras-institucionales)
+
+[Observable 4.6 Estructuras especializadas para la atención de casos de discriminación / violencia basadas en el género](#observable-4.6-estructuras-especializadas-para-la-atención-de-casos-de-discriminación-/-violencia-basadas-en-el-género)
+
+[Observable 4.7 Puestos especializados para la atención de casos de discriminación / violencias basadas en el género](#observable-4.7-puestos-especializados-para-la-atención-de-casos-de-discriminación-/-violencias-basadas-en-el-género)
+
+[Observable 4.8 Servicios especializados para la atención de casos de discriminación / violencia basadas en el género](#observable-4.8-servicios-especializados-para-la-atención-de-casos-de-discriminación-/-violencia-basadas-en-el-género)
+
+[Observable 4.9 Responsabilidades de actuación para atender casos de discriminación y violencia basada en el género](#observable-4.9-responsabilidades-de-actuación-para-atender-casos-de-discriminación-y-violencia-basada-en-el-género)
+
+[Componente: Procesos y recursos institucionales](#componente:-procesos-y-recursos-institucionales-1)
+
+[Observable 4.10 Criterios de resolución y medidas de no repetición en el marco de la justicia restaurativa](#observable-4.10-criterios-de-resolución-y-medidas-de-no-repetición-en-el-marco-de-la-justicia-restaurativa)
+
+[Observable 4.11 Mecanismos de seguimiento de casos y cumplimiento de resoluciones](#observable-4.11-mecanismos-de-seguimiento-de-casos-y-cumplimiento-de-resoluciones)
+
+[Observable 4.12 Documentación, sistematización de información y transparencia](#observable-4.12-documentación,-sistematización-de-información-y-transparencia)
+
+[Observable 4.13 Evaluación de atención de procedimientos formales (quejas o denuncias) de atención de casos de violencias de género.](#observable-4.13-evaluación-de-atención-de-procedimientos-formales-\(quejas-o-denuncias\)-de-atención-de-casos-de-violencias-de-género.)
+
+[Observable 4.14 Evaluación de atención de mecanismo de atención de las violencias por razones de género](#observable-4.14-evaluación-de-atención-de-mecanismo-de-atención-de-las-violencias-por-razones-de-género)
+
+#
+
+# **Cuestionario** {#cuestionario}
+
+## **Eje de políticas de igualdad sustantiva, inclusión y cuidados corresponsables** {#eje-de-políticas-de-igualdad-sustantiva,-inclusión-y-cuidados-corresponsables}
+
+1. ### **Materia: Igualdad de género**  {#materia:-igualdad-de-género}
+
+#### **Componente: Normas y políticas**  {#componente:-normas-y-políticas}
+
+##### Observable 1.1. Proceso de armonización normativa {#observable-1.1.-proceso-de-armonización-normativa}
+
+Pregunta inicial:
+
+**1\. La IES ha llevado a cabo un proceso formal para armonizar su legislación o normatividad interna en materia de igualdad sustantiva e inclusión, conforme a la Ley General de Educación Superior?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿En qué términos se ha realizado este proceso?**
+
+Marque todas las características o elementos que resulten aplicables a este instrumento:
+
+| Análisis general de las normas vigentes y aplicables a la IES y sus funciones, en materia de igualdad sustantiva, inclusión, no discriminación, así como otros derechos humanos.  | Sí |
+| :---- | :---- |
+| Análisis específico la normatividad vigente en materia de educación superior e igualdad sustantiva, inclusión, no discriminación, así como otros derechos humanos. | Sí |
+| Identificación de actualizaciones, modificaciones o desarrollo de disposiciones internas, derivado del análisis normativo. | Sí |
+| Planificación o programación de una ruta de modificaciones normativas. | Sí |
+| Aplicación de las actualizaciones, modificaciones o desarrollo de disposiciones internas. | Sí          |
+| La armonización da cumplimiento al conjunto de obligaciones legales aplicables a la IES en estas materias. | Sí |
+| Proceso participativo para la armonización normativa interna. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Cuántas instancias académicas y administrativas se consideró para este proceso de armonización?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 1.2 Norma principal de carácter general que integra la igualdad de género  {#observable-1.2-norma-principal-de-carácter-general-que-integra-la-igualdad-de-género}
+
+Pregunta inicial:
+
+**2\. El máximo documento jurídico interno de carácter general de la IES vigente en el año, ¿reconoce o integra explícitamente a la “igualdad de género” en su contenido?**
+*Nota: No son aplicables los documentos de planeación, mismos que se reportan en otro apartado.*
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿En qué términos se reconoce o integra a la “igualdad de género” en dicho documento?**
+
+Marque todas las características o elementos que resulten aplicables a este instrumento:
+
+| Reconoce o integra explícitamente el término de “igualdad de género”, o bien, uno o más términos que remiten a una acepción más amplia o integral, entre otros: la igualdad sustantiva, la igualdad entre mujeres y hombres o la igualdad entre los géneros. | Sí |
+| :---- | :---- |
+| Atiende la observación del Comité para la eliminación de todas las formas de discriminación contra las mujeres (Comité CEDAW) al Estado mexicano, referente a no tratar de forma indistinta los términos igualdad y equidad de género, y remitirse en todo momento a aquel de “igualdad de género”. | Sí |
+| Además del o de los términos relativos a la igualdad de género, hace referencia y explica otros conceptos que se articulan con la igualdad de género en diferentes ámbitos y dimensiones de la materia, como son: la no discriminación, inclusión, los cuidados corresponsables y una vida libre de violencia, entre otros. | Sí |
+| Explicita o desagrega cuál es el alcance o ámbito de aplicación de la igualdad de género dentro de la IES. | Sí |
+| Es de observancia obligatoria a las instancias y población que forman parte de la IES. | Sí |
+| Se encuentra vigente sin una temporalidad o fecha de término de vigencia, y es resultado de un proceso interno de formalización, de acuerdo con las normas y procedimientos previstos por la propia IES. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué poblaciones es aplicable el instrumento?**
+
+@TODOS
+
+**¿Cuántas instancias académicas y administrativas es aplicable el instrumento?**
+
+1 instancias académicas
+1 instancias administrativas
+
+##### Observable 1.3 Normas y disposiciones para la igualdad de género {#observable-1.3-normas-y-disposiciones-para-la-igualdad-de-género}
+
+Pregunta inicial:
+**3\. ¿La IES cuenta con normatividad interna focalizada o especializada específicamente en materia de igualdad de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características forman parte de su normatividad interna en materia de igualdad de género?**
+
+Marque todas las características o elementos que resulten aplicables:
+
+| Su diseño incluye un enfoque complejo e integral a partir de diversos ejes de trabajo que buscan incidir en la transformación de las diferentes desigualdades de género que existen en la IES, como son: paridad, no discriminación, inclusión, cuidados corresponsables y una vida libre de violencias. | Sí |
+| :---- | :---- |
+| Se trata de normas internas de la IES que tienen carácter jurídicamente vinculante y de observancia obligatoria | Sí |
+| Son normas específicas en materia de igualdad de género en su integralidad, y son distintas a aquellas adoptadas en materia de violencia de género. En caso de abordar la materia de violencia de género, se focalizan en la prevención primaria y no reducen el alcance de la igualdad de género al abordaje de las violencias de género | Sí |
+| Explícita o desagrega cuál es el alcance o ámbito de aplicación de la igualdad de género dentro de la IES. | Sí |
+| Se encuentra vigente sin una temporalidad o fecha de término de vigencia, y es resultado de un proceso interno de formalización, de acuerdo con las normas y procedimientos previstos por la propia IES. | Sí |
+
+*Nota: No se considerarán para esta pregunta:*
+
+- *Norma máxima reportada en la pregunta anterior.*
+- *Normas generales que sólo tengan una mención a la igualdad*
+- *Normas en materia de violencia de género*
+- *Manuales, guías, o documentos de referencia sin observancia jurídica*
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Cuáles son las poblaciones de la IES a las que les son aplicables las disposiciones normativas específicas en materia de igualdad de género?**
+
+@TODOS
+
+#####
+
+**¿A cuántas instancias académicas y administrativas les son aplicables o cuentan con normas internas para la igualdad de género?**
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 1.4 Planeación institucional para la igualdad de género {#observable-1.4-planeación-institucional-para-la-igualdad-de-género}
+
+Pregunta inicial:
+**4\. ¿La IES cuenta con una planeación institucional y programática (plan, política o programa institucional) de carácter general en materia de igualdad de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características forman parte de la planeación institucional y programática en materia de igualdad de género?**
+
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se trata de un instrumento de planeación debidamente formalizado mediante un procedimiento de aprobación y/o publicación, por lo que es público y se encuentra disponible por medios institucionales. | Sí |
+| :---- | :---- |
+| Su contenido aborda a la igualdad de género de manera integral, y no se reduce a la actuación frente a la violencia de género. | Sí |
+| La planeación define objetivos y metas claras en materia de igualdad de género. | Sí |
+| La planeación establece tiempos de ejecución (anuales y multianuales). | Sí |
+| Se definen áreas responsables de la ejecución de los planes en distintas áreas de la IES. | Sí |
+| Se cuenta con mecanismos e indicadores de medición de avances en su gestión, resultados, impacto (este último, sólo si aplica). | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué poblaciones es aplicable la planeación institucional y programática de carácter general (al menos una acción explícita para cada sector)?**
+
+@TODOS
+- [ ] Planeación general sin focalizar un sector específico
+
+**¿Cuántas instancias académicas y administrativas cuentan con una planeación interna para la igualdad de género?**
+1 instancias académicas
+1 instancias administrativas
+
+#### **Componente: Estructuras organizacionales** {#componente:-estructuras-organizacionales}
+
+##### Observable 1.5 Estructuras para la igualdad de género  {#observable-1.5-estructuras-para-la-igualdad-de-género}
+
+Pregunta inicial:
+**5\. ¿La IES cuenta con una instancia ejecutiva interna (unidad, coordinación, órgano, departamento) para diseñar, implementar, dar seguimiento y evaluar políticas y/o acciones institucionales en materia de igualdad de género aplicables a toda la institución?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en dicha instancia?**
+
+Marque todas las características o elementos que resulten aplicables:
+
+| Es una instancia formalmente creada, reconocida jurídicamente dentro de la estructura orgánica y marco normativo de la IES. | Sí |
+| :---- | :---- |
+| Está adscrita directamente a la autoridad central o en el primer plano de la administración central. | Sí |
+| Cuenta con atribuciones claras en materia de políticas de transversalización e institucionalización de la igualdad de género (no de atención a la violencia de género) para toda la IES. | Sí |
+| Cuenta con una estructura organizacional interna con áreas de trabajo (no un sólo puesto, no un enlace, no programa con temporalidad). | Sí |
+| Cuenta con presupuesto propio, asignado formalmente, para realizar sus actividades institucionales. | Sí |
+| Cuenta con personal y recursos materiales propios y suficientes para el área y sus funciones. | Sí |
+| Cuenta con perfiles de contratación oficiales que establecen el requerimiento de experiencia y formación en materia de políticas de igualdad de género. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En qué sectores implementa dicha instancia las políticas y acciones que desarrolla?**
+(Al menos una acción que impacte directamente para cada sector)
+
+@TODOS
+
+**¿Cuántas instancias académicas y administrativas cuentan con una estructura formal dedicada a transversalizar las políticas para la igualdad de género a nivel interno?**
+1 instancias académicas
+1 instancias administrativas
+
+
+
+##### Observable 1.6 Principio de paridad de género en la normatividad {#observable-1.6-principio-de-paridad-de-género-en-la-normatividad}
+
+Pregunta inicial:
+**6\. ¿La IES cuenta con disposiciones normativas que establezcan el principio de paridad de género para la conformación de sus autoridades y espacios de toma de decisiones (administrativos y académicos)?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en las disposiciones en materia de paridad de género de la IES?**
+
+Marque todas las características o elementos que resulten aplicables:
+
+| Se establece de manera explícita (no de facto) el principio de paridad de género en espacios de toma de decisiones (administrativos y académicos)  de la IES. | Sí |
+| :---- | :---- |
+| La disposición es jurídicamente vinculante y de observancia obligatoria. | Sí |
+| Se establece la paridad como base, y no como un límite máximo a la comunidad menor representada históricamente en los espacios de toma de decisión (administrativos y académicos). | Sí |
+| En articulación con el principio de paridad de género, establece acciones afirmativas que aceleren el avance de las mujeres y comunidades menos representadas históricamente en los espacios de toma de decisión (administrativos y académicos), sin confundirlo con el principio de paridad de género. | Sí |
+| Se aplica en las disposiciones de integración de todos los cuerpos colegiados de máximo nivel y en los cargos de elección donde históricamente no exista la paridad | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En cuántas instancias académicas y administrativas se aplica de manera explícita el principio de paridad de género para la conformación de sus autoridades y/o máximas figuras de toma de decisión?**
+1 instancias académicas
+1 instancias administrativas
+**¿A qué autoridades se aplica de manera explícita el principio de paridad de género?**
+Titular de la IES
+Máximo cuerpo colegiado de toda la IES
+
+#####
+
+##### Observable 1.7 Integración paritaria  {#observable-1.7-integración-paritaria}
+
+Pregunta inicial:
+**7\. ¿La IES cuenta con una política para aumentar la presencia, inclusión y participación de mujeres y grupos históricamente discriminados en espacios académicos, administrativos y escolares, donde su presencia ha sido limitada?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en la o las políticas para aumento de mujeres y grupos históricamente discriminados en la IES?**
+
+Marque todas las características o elementos que resulten aplicables:
+
+| Se trata de políticas institucionalizadas (no de facto) en la literalidad para el aumento de mujeres y grupos históricamente discriminados en espacios donde su presencia ha sido limitada. |  Sí |
+| :---- | :---- |
+| La política incluye disposiciones o criterios que son jurídicamente vinculantes o de observancia obligatoria. | Sí |
+| La política favorece el ingreso y permanencia de mujeres en áreas donde su presencia es limitada y/o históricamente subrrepresentada. | Sí |
+| La política favorece el ingreso de personas LGBTIQ+. | Sí |
+| La política favorece el ingreso de personas pertenecientes a pueblos originarios, indígenas y/o afrodescendientes. | Sí |
+| La política favorece el ingreso de personas con discapacidad. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En qué sectores de la IES se aplica de manera explícita esta política?**
+(Al menos una política específicamente dirigida)
+
+@TODOS
+
+**¿En cuántas instancias académicas y administrativas se aplica de manera explícita la política referida?**
+1 instancias académicas
+1 instancias administrativas
+
+(Acá deberán estar ligadas las preguntas iniciales de población de la IES)
+
+####
+
+#### **Componente: Procesos y recursos institucionales** {#componente:-procesos-y-recursos-institucionales}
+
+##### Observable 1.8 Estadísticas y diagnósticos con perspectiva de género {#observable-1.8-estadísticas-y-diagnósticos-con-perspectiva-de-género}
+
+Pregunta inicial:
+**8\. ¿La IES cuenta con mecanismos institucionales para generar estadísticas y diagnósticos con perspectiva de género? Esto es, mecanismos para la generación de información y procesos diagnósticos de las desigualdades, discriminaciones y violencias de género y por cualquier otro motivo.**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los mecanismos institucionales para generar estadísticas y diagnósticos con perspectiva de género?**
+
+Marque todas las características o elementos que resulten aplicables:
+
+| Existe una política institucional explícita que solicita la desagregación por sexo-género de toda la información estadística correspondiente a todos los sectores de la IES. | Sí |
+| :---- | :---- |
+| Existe una instancia o conjunto de instancias que son responsables de sistematizar y asegurar que toda la información de la IES se desagregue por sexo-género. | Sí |
+| Se emite un anuario estadístico con información desagregada por sexo-género para todos los sectores de la IES | Sí |
+| Existe una política institucional explícita que solicita la realización de diagnósticos sobre desigualdades de género en todos los sectores de la IES. | Sí |
+| Se cuenta con un diagnóstico sobre brechas de desigualdad de género en la IES con vigencia máxima de 5 años. | Sí |
+| Se cuenta con un diagnóstico sobre formas de violencia y discriminación contra las mujeres por razones de género, con vigencia máxima de 5 años. | Sí |
+| Se cuenta con un diagnóstico sobre formas de violencia y discriminación por razones de género y/u otras razones, con vigencia máxima de 5 años. | Sí |
+| Se cuenta con un diagnóstico sobre cuidados corresponsables y/o división sexual del trabajo con vigencia máxima de 5 años. | Sí |
+| Se cuenta con un diagnóstico sobre diversidades sexuales y de género con vigencia máxima de 5 años. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores consideran los diagnósticos generales de igualdad de género de la IES?**
+
+@TODOS
+
+**¿Cuántas instancias académicas y administrativas cuentan con un diagnóstico interno de igualdad de género?**
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 1.9 Programas y actividades de sensibilización, concientización y capacitación en igualdad de género {#observable-1.9-programas-y-actividades-de-sensibilización,-concientización-y-capacitación-en-igualdad-de-género}
+
+Pregunta inicial:
+**9\. ¿La IES cuenta con programas específicos y actividades para la sensibilización, concientización y capacitación de sus comunidades en materia de igualdad de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los programas específicos y actividades para la sensibilización, concientización y capacitación en igualdad de género?**
+
+Marque todas las características o elementos que resulten aplicables:
+
+| Se trata de un programa o programas institucionales, formalizados en la planificación de la IES. | Sí |
+| :---- | :---- |
+| Los programas incluyen actividades formativas como cursos, seminarios y talleres con perspectiva de género o abordan la agenda de la igualdad de género (duración mínima: 2 sesiones, 4 horas). | Sí |
+| Los programas incluyen actividades de sensibilización durante las fechas clave para la igualdad, por ejemplo: el 11 de febrero (día de las mujeres y las niñas en la ciencia), el 8 de marzo (día internacional de la mujer), junio (mes del orgullo LGBTIQ+), 25 de noviembre, etc. | Sí |
+| Los programas incluyen una política de comunicación de temas y materiales para la igualdad de género en medios de amplia difusión en las IES. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores de la IES consideran o se dirigen los programas de sensibilización, concientización y/o capacitación en igualdad de género?**
+
+@TODOS
+- [ ] Planeación general sin focalizar un sector específico
+
+**¿Cuántas instancias académicas y administrativas implementaron un programa de sensibilización, concientización y/o capacitación en igualdad de género?**
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 1.10 Presupuestos institucionales para la igualdad de género {#observable-1.10-presupuestos-institucionales-para-la-igualdad-de-género}
+
+Pregunta inicial:
+**10\. ¿La IES cuenta con un presupuesto anual sensible al género y/o con presupuesto etiquetado específicamente para la igualdad de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en la asignación de presupuesto de la IES?**
+
+Marque todas las características o elementos que resulten aplicables:
+
+| La IES cuenta con algún instrumento interno de planeación y asignación presupuestal (reglamento, manual, entre otros) que establezca la obligatoriedad y/o los criterios para realizar presupuestos sensibles al género y/o presupuestos etiquetados específicamente para la igualdad de género. | Sí |
+| :---- | :---- |
+| El presupuesto institucional general de la IES ha sido definido a partir de un diagnóstico, así como analizado y construido desde la perspectiva de género  | Sí |
+| El presupuesto se incluye en algún instrumento de planeación y asignación presupuestal. | Sí |
+| El presupuesto institucional de la IES incluye recursos etiquetados en materia de igualdad de género (no reservados para la atención de las violencias) | Sí |
+| Los recursos etiquetados (si existen) en materia de igualdad de género, fueron asignados como resultado de la identificación de una problemática de desigualdad de género al interior de la IES, y se orienta a su eventual solución | Sí |
+| Los recursos asignados son adicionales al sueldo del personal que realiza las actividades para la igualdad de género y los gastos corrientes de las instancias dedicadas a esta materia (no incluir los recursos en materia de violencia de género, ya que se reportará más adelante). | Sí |
+| La IES asigna recursos para proyectos en materia de igualdad de género aun cuando no existe un proceso de etiquetado | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+####
+
+**¿A qué sectores se consideró en la asignación de presupuesto para la igualdad de género en la IES?**
+
+@TODOS
+
+####
+
+**¿Cuántas instancias académicas y administrativas ejercieron presupuesto específico para la igualdad de género?**
+
+1 instancias académicas
+1 instancias administrativas
+
+####
+
+#####
+
+##### Observable 1.11. Evaluaciones en igualdad de género / características de los observables {#observable-1.11.-evaluaciones-en-igualdad-de-género-/-características-de-los-observables}
+
+**11\. ¿La IES cuenta o ha realizado alguna evaluación institucional en materia de igualdad de género de sus políticas, programas, procesos y/o recursos institucionales?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en las evaluaciones institucionales en materia de igualdad de género?**
+
+Marque todas las características o elementos que resulten aplicables:
+
+| Evaluaciones diagnósticas de desigualdades basadas en el género | Sí |
+| :---- | :---- |
+| Evaluaciones sobre sus políticas y/o planeación institucional para la igualdad de género | Sí |
+| Evaluaciones sobre sus programas y/o actividades institucionales para la igualdad de género | Sí |
+| Evaluaciones a partir de indicadores de resultados en materia de igualdad de género | Sí |
+| Evaluaciones a partir de indicadores de impacto en materia de igualdad de género | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores consideran las evaluaciones institucionales en materia de igualdad de género realizadas en la IES?**
+
+@TODOS
+
+**¿A cuántas instancias académicas y administrativas consideran las evaluaciones institucionales en materia de igualdad de género realizadas en la IES?**
+1 instancias académicas
+1 instancias administrativas
+
+#### **Componente: Procesos y recursos académicos** {#componente:-procesos-y-recursos-académicos}
+
+##### Observable 1.12 Planes y programas de estudio, y asignaturas para la igualdad de género y con perspectiva de género (docencia) {#observable-1.12-planes-y-programas-de-estudio,-y-asignaturas-para-la-igualdad-de-género-y-con-perspectiva-de-género-(docencia)}
+
+Pregunta inicial:
+**12\. ¿La IES cuenta con planes de estudio con perspectiva de género y asignaturas para la igualdad de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los planes y programas de estudio de la IES?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Existe una normatividad que establece a la perspectiva de género como un requisito para el diseño y aprobación de planes de estudio | Sí |
+| :---- | :---- |
+| La perspectiva de género se establece como un enfoque transversal en los planes de estudio | Sí |
+| Existen asignaturas curriculares obligatorias específicas en sus objetivos, título y contenidos para el aprendizaje y la aplicación de la perspectiva de género | Sí |
+| Existen asignaturas curriculares optativas específicas en sus objetivos, título y contenidos para el aprendizaje y la aplicación de la perspectiva de género | Sí |
+| Existen asignaturas que parcialmente incorporan en sus contenidos la perspectiva de género (al menos en un 50%) | Sí |
+| Existen actividades de inducción o extracurriculares obligatorias para el alumnado que incorporan la perspectiva de género  | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En cuántos planes de estudio se establece como un enfoque transversal la perspectiva de género?**
+1 Planes de estudio nivel medio superior
+1 Planes de estudio nivel licenciatura
+1 Planes de estudio nivel posgrado
+
+**¿En cuántos planes de estudio se incorpora al menos una asignatura obligatoria específica en nombre y contenidos para la igualdad de género?**
+1 Planes de estudio nivel medio superior
+1 Planes de estudio nivel licenciatura
+1 Planes de estudio nivel posgrado
+
+**¿En cuántos planes de estudio se incorpora al menos una asignatura optativa específica en nombre y contenidos para la igualdad de género?**
+1 Planes de estudio nivel media superior
+1 Planes de estudio nivel licenciatura
+1 Planes de estudio nivel posgrado
+
+**¿En cuántos planes de estudio se incorporan asignaturas con al menos un 50% de contenidos con perspectiva de género?**
+1 Planes de estudio nivel media superior
+1 Planes de estudio nivel licenciatura
+1 Planes de estudio nivel posgrado
+
+#####
+
+##### Observable 1.13 Formación docente con perspectiva de género {#observable-1.13-formación-docente-con-perspectiva-de-género}
+
+Pregunta inicial:
+**13\. ¿La IES cuenta con programas de formación para su personal académico y administrativo en materia de igualdad y no discriminación?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en la formación del personal académico y administrativo de su IES?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| La formación en igualdad y/o perspectiva de género es obligatoria para el personal académico y administrativo de la IES | Sí |
+| :---- | :---- |
+| La IES cuenta con un programa para desarrollar las competencias en perspectiva de género dirigido al personal docente. | Sí |
+| La IES oferta periódicamente capacitaciones específicas en materia de igualdad y/o perspectiva de género para su personal académico y administrativo (fuera del programa mencionado anteriormente) | Sí |
+| Las actividades de capacitación son programas formativos de mediana o larga duración, son diferentes a charlas o conferencias (o actividades de sesiones únicas), y cuentan con objetivos específicos en materia de igualdad de género | Sí |
+| En el caso del personal académico, se cuenta con capacitaciones específicas para incorporar la perspectiva de género en su quehacer docente | Sí |
+| La IES realiza diagnóstico para conocer la aplicación de la perspectiva de género del personal académico, que retroalimente los programas o acciones de capacitación que se ofrecen en este sector | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En qué sectores del personal académico y administrativo de la IES se implementó la formación durante el año \_\_\_?**
+
+- [ ] Personal académico de tiempo parcial / por horas / por asignatura (docencia, investigación)
+- [ ] Personal académico de tiempo completo (docencia, investigación)
+- [ ] Personal administrativo de base
+- [ ] Personal administrativo de confianza
+- [ ] Personal administrativo por honorarios
+- [ ] Autoridades y alto funcionariado
+
+**¿En cuántas instancias de la IES se implementó la formación durante el año que estamos midiendo?**
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 1.14 Investigación académica con perspectiva de género {#observable-1.14-investigación-académica-con-perspectiva-de-género}
+
+Pregunta inicial:
+**14\. ¿La IES cuenta con investigación académica con perspectiva de género (centros, líneas de investigación, grupos académicos para la igualdad de género y no discriminación)?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en la investigación académica de su IES?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Existen instancias académicas, reconocidas dentro de la normatividad de la IES, dedicadas a la investigación feminista y en estudios de género como línea principal de estudios | Sí |
+| :---- | :---- |
+| Estas instancias académicas están formalizadas y son permanentes (sin temporalidad de vigencia) | Sí |
+| Existen líneas de investigación institucionalizadas en estudios de género y feministas dentro de instancias académicas dedicadas a distintos ámbitos de conocimientos | Sí |
+| Existen grupos académicos institucionalizados en la IES dedicados explícitamente a la investigación desde los estudios de género y feministas | Sí |
+| La institución cuenta con una política para promover la investigación en estudios de género y feministas de manera transversal a todas sus instancias académicas | Sí |
+| La institución cuenta con una política para incorporar la perspectiva de género en los criterios para la aprobación de proyectos de investigación (liderazgo de mujeres académicas, grupos diversos, incorporación de la variable sexo/género) | Sí |
+| La institución cuenta con acciones afirmativas para impulsar a las mujeres en avanzar en sus niveles como investigadoras | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Cuántas instancias académicas cuentan con una área o grupo formal de investigación en estudios de género y feministas?**
+
+1 instancias académicas
+
+**¿Del total de proyectos de investigación financiados por la IES cuántos son dirigidos por mujeres?**
+
+1 proyectos de investigación de un total de \_\_\_\_
+
+####
+
+##### Observable 1.15 Mecanismos y criterios de evaluación y promoción académica (docencia e investigación) para la igualdad y no discriminación {#observable-1.15-mecanismos-y-criterios-de-evaluación-y-promoción-académica-(docencia-e-investigación)-para-la-igualdad-y-no-discriminación}
+
+Pregunta inicial:
+**15\. ¿La IES cuenta con mecanismos y criterios en materia de igualdad y no discriminación para las evaluaciones y promociones de su personal académico?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los mecanismos y criterios en materia de igualdad y no discriminación en las evaluaciones y promociones académicas?**
+
+Mencione todas las características o elementos que resulten aplicables:
+
+| Los mecanismos y criterios existentes están formalizados y son vinculantes para toda la universidad | Sí |
+| :---- | :---- |
+| Los mecanismos y criterios existentes incorporan la perspectiva de género, particularmente el enfoque de cuidados, como un componente que comprende las cargas de trabajo y los ritmos de las trayectorias de mujeres y otras personas cuidadoras | Sí |
+| Los mecanismos y criterios existentes incorporan disposiciones favorables para la evaluación con perspectiva de género, como la composición paritaria de los grupos evaluadores | Sí |
+| Los mecanismos y criterios existentes reconocen como puntos favorables para la evaluación la participación del personal académico en actividades para la igualdad, no discriminación y una vida libre de violencias en la IES | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Cuántas instancias académicas cuentan con políticas de evaluación y promoción con enfoque de igualdad y no discriminación dirigidas al personal académico?**
+
+1 instancias académicas
+
+##### Observable 1.16 Mecanismos y criterios de ingreso, permanencia y evaluación estudiantil para la igualdad y no discriminación {#observable-1.16-mecanismos-y-criterios-de-ingreso,-permanencia-y-evaluación-estudiantil-para-la-igualdad-y-no-discriminación}
+
+Pregunta inicial:
+**16\. ¿La IES cuenta con mecanismos y criterios para el ingreso, permanencia, fortalecimiento de las trayectorias, evaluación, egreso y titulación de mujeres alumnas y alumnado perteneciente a grupos históricamente discriminados?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en tales los mecanismos y criterios?**
+
+Mencione todas las características o elementos que resulten aplicables:
+
+| Los mecanismos y criterios existentes están formalizados y son vinculantes para toda la universidad, especificar: Ingreso Permanencia  Fortalecimiento de las trayectorias Evaluación Egreso  Titulación | Sí |
+| :---- | :---- |
+| Los mecanismos y criterios existentes incorporan la perspectiva de género, especificar: Ingreso Permanencia  Fortalecimiento de las trayectorias Evaluación Egreso  Titulación | Sí |
+| Los mecanismos y criterios existentes focalizados en la permanencia de alumnas, se han definido a partir de la identificación de obstáculos en sus trayectorias | Sí |
+| Existen mecanismos y criterios focalizados en la permanencia de personas pertenecientes las poblaciones de las diversidades y disidencias sexuales y de género | Sí |
+| Existen mecanismos y criterios focalizados en la permanencia de personas pertenecientes a pueblos originarios, indígenas y/o afrodescendientes | Sí |
+| Existen mecanismos y criterios focalizados en la permanencia de personas con discapacidades | Sí |
+| Los mecanismos y criterios existentes en todos los casos son integrales y no se limitan a apoyos económicos y/o materiales | Sí |
+| Existen mecanismos o criterios para la conciliación de la vida escolar o laboral con la familiar y de cuidados | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En qué sectores del alumnado se implementan dichos mecanismos?**
+
+- [ ] Alumnado de nivel medio superior
+- [ ] Alumnado de nivel licenciatura
+- [ ] Alumnado de nivel posgrado
+
+**¿Cuántas instancias académicas implementan dichos mecanismos?**
+1 instancias académicas
+
+#####
+
+##### Observable 1.17. Evaluaciones académicas en materia de igualdad de género {#observable-1.17.-evaluaciones-académicas-en-materia-de-igualdad-de-género}
+
+**17\. ¿La IES cuenta o ha realizado alguna evaluación en materia de igualdad de género de sus políticas, programas, procesos y/o recursos académicos?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en las evaluaciones académicas en materia de igualdad de género?**
+
+Marque todas las características o elementos que resulten aplicables:
+
+| La IES ha realizado evaluaciones sobre sus planes y programas de estudio para la igualdad de género | Sí |
+| :---- | :---- |
+| La IES ha realizado evaluaciones docentes para la igualdad de género | Sí |
+| La IES ha realizado evaluaciones de investigación para la igualdad de género | Sí |
+| La IES ha realizado evaluaciones académicas a partir de indicadores de resultados en materia de igualdad de género | Sí |
+| La IES ha realizado evaluaciones académicas a partir de indicadores de impacto en materia de igualdad de género | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores consideran las evaluaciones académicas en materia de igualdad de género realizadas en la IES?**
+
+@TODOS
+
+**¿A cuántas instancias académicas y administrativas consideran las evaluaciones académicas en materia de igualdad de género realizadas en la IES?**
+1 instancias académicas
+1 instancias administrativas
+
+2. ### **Materia: Inclusión y no discriminación** {#materia:-inclusión-y-no-discriminación}
+
+#### **Componente: Normas y políticas institucionales y académicas** {#componente:-normas-y-políticas-institucionales-y-académicas}
+
+##### Observable 2.1 Políticas institucionales para la inclusión {#observable-2.1-políticas-institucionales-para-la-inclusión}
+
+Pregunta inicial:
+**18\. ¿La IES cuenta con políticas institucionales dirigidas a la inclusión de grupos históricamente discriminados?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**Mencione todas las características o elementos que están presentes en tales políticas de inclusión y no discriminación:**
+
+
+| Considera mecanismos de inclusión y no discriminación específicos para las mujeres en la IES | Sí |
+| :---- | :---- |
+| Considera políticas de inclusión y no discriminación hacia las diversidades sexogenéricas (comunidad LGBTIQ+) en la IES | Sí |
+| Considera políticas de inclusión y no discriminación hacia las personas pertenecientes a grupos afrodescendientes, originarios y/o indígenas | Sí  |
+| Considera políticas de inclusión y no discriminación hacia las personas con discapacidades | Sí |
+| Las normas y/o políticas son explícitas en su objetivo y alcance para la inclusión de grupos históricamente discriminados por razones de género y otros motivos | Sí |
+| Se trata de políticas internas de la IES que tienen carácter jurídicamente vinculante y de observancia obligatoria | Sí |
+| Incluyen políticas integrales que toman en consideración la aplicación de medidas afirmativas, medidas de inclusión y/o medidas de nivelación | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En qué sectores se implementan dichas políticas?**
+
+@TODOS
+
+**¿Cuántas instancias académicas implementan dichas políticas?**
+
+1 instancias académicas
+1 instancias administrativas
+
+##### Observable 2.2 Políticas institucionales y académicas de inclusión y no discriminación {#observable-2.2-políticas-institucionales-y-académicas-de-inclusión-y-no-discriminación}
+
+Pregunta inicial:
+**19\. ¿La IES cuenta con políticas institucionales dirigidas a la no discriminación de las diversidades sexuales y de género (LGBTIQ+)?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en políticas institucionales y académicas de inclusión y no discriminación?** Mencione todas las características o elementos que resulten aplicables:
+
+| Se tratan de normas y políticas oficiales y vigentes | Sí |
+| :---- | :---- |
+| Establecen en su literalidad la no discriminación en la IES por motivos de orientación sexual, identidad de género, expresión de género, características sexuales y cualquier otro motivo vinculado con la diversidad y disidencia sexual y de género | Sí |
+| Incluyen actividades institucionales de alto impacto para la visibilidad y conmemoración de las reivindicaciones de las personas LGBTIQ+ | Sí |
+| Incluyen materiales de sensibilización sobre los derechos de las personas LGBTIQ+ ampliamente difundidos en la comunidad de la IES | Sí |
+| Incluyen formación y capacitación sobre derechos humanos de las personas LGBTIQ+ | Sí |
+| Considera la habilitación de sanitarios y otros espacios sin distinción de género para prevenir la discriminación y la violencia por razones de género | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En qué sectores se implementan dichas políticas?**
+
+@TODOS
+
+**¿Cuántas instancias académicas implementan dichas políticas?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+#####
+
+#####
+
+##### Observable: 2.3 Mecanismos institucionales de reconocimiento de la diversidad sexo-genérica {#observable:-2.3-mecanismos-institucionales-de-reconocimiento-de-la-diversidad-sexo-genérica}
+
+Pregunta inicial:
+
+**20\. ¿La IES cuenta con mecanismos institucionales formales para el reconocimiento de las identidades de género de las personas que integran su comunidad conforme a su autodeterminación, particularmente personas integrantes a la comunidad trans\* y no binarie?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los mecanismos institucionales?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| El derecho a la identidad de género está establecido en la normatividad y políticas institucionales para la igualdad y no discriminación | Sí |
+| :---- | :---- |
+| Se cuenta con un procedimiento institucional para actualizar el nombre legal y el marcador de género de las personas cuando han realizado previamente su actualización de documentos legales | Sí |
+| Se cuenta con un mecanismo formal para la solicitud de reconocimiento social de la identidad de género al interior de la institución, que favorece que las personas sean nombradas conforme a sus nombres elegidos y pronombres, independientemente de que cuenten con sus datos legales actualizados | Sí |
+| A partir de disposiciones institucionales, las personas trans\* pueden participar en las diversas actividades académicas, deportivas y artísticas conforme a la autodeterminación de su identidad de género | Sí |
+| Se implementan actividades de sensibilización a la comunidad para respetar las identidades de género trans\* y no binaries | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores están dirigidas las políticas para el reconocimiento de la identidad de género?**
+
+@TODOS
+
+**¿En qué instancias se implementan las políticas de reconocimiento de la identidad de género?**
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+#####
+
+##### Observable 2.4 Lenguaje incluyente, no discriminatorio y no sexista {#observable-2.4-lenguaje-incluyente,-no-discriminatorio-y-no-sexista}
+
+Pregunta inicial:
+**21\. ¿La IES cuenta con criterios institucionales para el uso del lenguaje incluyente, no discriminatorio y no sexista en la documentación oficial ?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los criterios institucionales para el uso del lenguaje incluyente, no discriminatorio y no sexista?**
+
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se cuenta con un instrumento que establece directrices oficiales para los usos del lenguaje en toda la institución | Sí |
+| :---- | :---- |
+| Formalmente, hay disposiciones para que todas las instancias de la IES (académicas y administrativas) den cumplimiento al lenguaje incluyente en todas las formas e instrumentos de comunicación. | Sí |
+| Todos los títulos, diplomas y certificados se expiden en femenino para mujeres  | Sí |
+| Los documentos normativos de la institución usan lenguaje incluyente al referirse a cargos y nombramientos | Sí |
+| Las credenciales que expide la IES a su personal usa marcas gramaticales femeninas para mujeres | Sí |
+| Se cuenta con un instrumento institucional para prevenir discursos y comunicaciones discriminatorias hacia las mujeres, las disidencias sexogenéricas, pueblos originarios, personas con discapacidades y cualquier grupo históricamente discriminado  | Sí |
+| La IES realiza procesos de sensibilización y capacitación sobre usos del lenguaje incluyente y no discriminatorio.    | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En cuáles de los documentos normativos que rigen a los siguientes sectores se aplica la política de lenguaje incluyente, no discriminatorio y no sexista?** (Por ejemplo, reglamento de inscripciones, o reglamento de posgrado)
+
+@TODOS
+
+**¿Cuántas instancias académicas y administrativas implementan la política de uso del lenguaje incluyente, no discriminatorio y no sexista? (al menos una acción sustantiva)**
+
+1 instancias académicas
+1 instancias administrativas
+
+#### **Componente: Procesos y recursos institucionales y académicos** {#componente:-procesos-y-recursos-institucionales-y-académicos}
+
+##### Observable 2.5 Programas y acciones institucionales de prevención primaria de la discriminación y la violencia {#observable-2.5-programas-y-acciones-institucionales-de-prevención-primaria-de-la-discriminación-y-la-violencia}
+
+Pregunta inicial:
+**22\. ¿La IES cuenta con programas y acciones institucionales de prevención primaria de las discriminaciones y violencias por razones de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los programas y acciones institucionales de prevención primaria?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se establece de manera institucional la responsabilidad de la o las autoridades universitarias de prevenir la violencia por razones de género | Sí |
+| :---- | :---- |
+| La IES ha emitido de manera formal una declaratoria contra las violencias por razones de género | Sí |
+| Incluye campañas y actividades de sensibilización sobre las violencias por razones de género | Sí |
+| Incluye la formación al alto funcionariado en materia de prevención de las violencias por razones de género | Sí |
+| Incluye senderos seguros para mujeres integrantes de las IES | Sí |
+| Incluye luminarias y otros servicios que amplían la seguridad espacial con perspectiva de género | Sí |
+| Considera políticas preventivas de la violencia digital contra las mujeres y por razones de género | Sí |
+| Incluye información sobre las rutas de atención de las violencias por razones de género | Sí |
+| Otra (mencione cuál o cuáles) | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores están dirigidas dichos programas y acciones de prevención?**
+
+
+@TODOS
+
+**¿En qué instancias se aplican dichos programas y acciones de prevención (al menos una acción sustantiva)?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 2.6 Programas y acciones institucionales de trabajo con hombres para la igualdad de género {#observable-2.6-programas-y-acciones-institucionales-de-trabajo-con-hombres-para-la-igualdad-de-género}
+
+Pregunta inicial:
+**23\. ¿La IES cuenta con programas y acciones institucionales de trabajo con hombres desde un enfoque de género, interseccionalidad y derechos humanos, orientadas a prevenir las violencias y construir igualdad de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los programas y acciones institucionales de trabajo con hombres?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Existe un programa formalizado de trabajo con hombres en la IES para construir igualdad y prevenir las violencias a cargo de las instancias responsables en la materia | Sí |
+| :---- | :---- |
+| Cuenta con documentos de diseño metodológico específicos y propios de la IES en construcción de igualdad y prevención de las violencias focalizados en hombres | Sí |
+| Se construye desde un enfoque crítico de las masculinidades que se orienta al cambio subjetivo y colectivo de los hombres, como agentes de cambio para la igualdad y la eliminación de las desigualdades patriarcales  | Sí |
+| Incluye un enfoque interseccional en el trabajo con hombres, desde un diseño que permite reconocer distintas realidades, como son: edad, identidad de género, orientación sexual, etnicidad, tipo de población de la IES, clase social, entre otras | Sí |
+| Incluye una agenda amplia y permanente de actividades para el abordaje de las masculinidades | Sí |
+| Incluye enfoques vivenciales y de trabajo autorreflexivo para los hombres   | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores se incluye en las acciones institucionales de trabajo con hombres? (al menos una acción sustantiva)**
+
+@TODOS
+
+**¿Qué instancias implementan los programas y acciones institucionales de trabajo con hombres?**
+
+1 instancias académicas
+1 instancias administrativas
+
+
+
+3. ### **Materia: Cuidados corresponsables** {#materia:-cuidados-corresponsables}
+
+#### **Componente: Normas y políticas institucionales** {#componente:-normas-y-políticas-institucionales}
+
+##### Observable 3.1 Políticas institucionales para la corresponsabilidad de los cuidados {#observable-3.1-políticas-institucionales-para-la-corresponsabilidad-de-los-cuidados}
+
+Pregunta inicial:
+**24\. ¿La IES cuenta con una política para la corresponsabilidad de los cuidados, establecida formalmente en instrumentos normativos y de política institucional, que incluye criterios y acciones que son superiores a los derechos en la materia establecidos por ley?**
+
+*Nota: Se consideran políticas para la corresponsabilidad de los cuidados que son adicionales a las presentes en los contratos colectivos de trabajo, y que impactan en la comunidad académica sin relaciones laborales con la IES*
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en la política para la corresponsabilidad de los cuidados?**
+
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se trata de una política institucional establecida formalmente en instrumentos normativos y de política institucional | Sí |
+| :---- | :---- |
+| Se define formalmente a los cuidados corresponsables como un derecho que no se restringe a prestaciones laborales, por lo cual se incluye a la comunidad estudiantil  | Sí |
+| Incluye una definición integral de cuidados corresponsables en lo social y de género, que reconoce distintos vínculos y necesidades de cuidados, que no se limitan a la reproducción y la crianza o al modelo de la familia nuclear, para abarcar a personas adultas mayores, infancias fuera del núcleo familiar, personas con alguna discapacidad, personas dependientes de cuidados, entre otras. | Sí |
+| Reconoce a los cuidados corresponsables como un compromiso con la igualdad de género y con la redistribución del trabajo de cuidados no remunerado históricamente asignado a las mujeres | Sí |
+| Incluye un enfoque relacional de género que busca la participación de los hombres en labores de cuidados | Sí |
+| Incluye disposiciones que favorecen el tiempo de descanso, el autocuidado y el bienestar subjetivo y colectivo | Sí |
+| Contempla licencias o políticas de flexibilidad laboral que favorecen las actividades de cuidados | Sí |
+| Considera el derecho a la desconexión en horarios no laborales como parte del autocuidado | Sí |
+| Establece acciones de sensibilización, concientización y capacitación a las comunidades en materia de cuidados corresponsables  que fomentan la corresponsabilidad de la IES y otros sectores de su comunidad en los cuidados | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Cuáles de los siguientes sectores están considerados en la política para la corresponsabilidad de los cuidados?**
+
+@TODOS
+
+**¿En qué instancias se implementa la política para la corresponsabilidad de los cuidados?**
+
+1 instancias académicas
+1 instancias administrativas
+
+####
+
+####
+
+#### **Componente: Procesos y recursos institucionales y académicos**   {#componente:-procesos-y-recursos-institucionales-y-académicos-1}
+
+##### Observable 3.2 Licencias y permisos con perspectiva de género y de cuidados {#observable-3.2-licencias-y-permisos-con-perspectiva-de-género-y-de-cuidados}
+
+Pregunta inicial:
+**25\. ¿La IES cuenta con licencias y permisos para los cuidados superiores a la ley con una perspectiva de género y de cuidados?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en las licencias y permisos con perspectiva de género y cuidados?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Licencia de maternidad superior a la ley para trabajadoras | Sí |
+| :---- | :---- |
+| Permisos de maternidad para alumnas | Sí |
+| Licencia de paternidad superior a la ley para trabajadores  | Sí |
+| Permisos de paternidad para alumnos  | Sí |
+| Permisos para lactancia para madres superiores a la ley | Sí |
+| Licencias y permisos de maternidad y paternidad remunerados en más del 75% (de entre los anteriores) | Sí |
+| Flexibilidad en horarios para personas a cargo del cuidado de infancias   | Sí |
+| Flexibilidad en horarios para personas cuidadoras de personas adultas mayores, enfermas y/o con discapacidades | Sí |
+| Permisos o licencias mensturales | Sí |
+| Permisos para eventos escolares, o eventualidades de salud de las infancias u otras personas con necesidades de cuidados que están a cargo de la persona cuidadora | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores están dirigidas las licencias y permisos con perspectiva de género y cuidados?**
+
+@TODOS
+
+**¿Qué instancias implementan las licencias y permisos con perspectiva de género y cuidados?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 3.3 Infraestructura para el acceso y ejercicio de cuidados en corresponsabilidad {#observable-3.3-infraestructura-para-el-acceso-y-ejercicio-de-cuidados-en-corresponsabilidad}
+
+Pregunta inicial:
+**26\. ¿La IES cuenta con infraestructura dentro de sus instalaciones para el acceso y ejercicio de cuidados en corresponsabilidad?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en la infraestructura para el acceso y ejercicio de los cuidados en corresponsabilidad?**
+
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se cuenta con salas de lactancia acondicionadas  | Sí |
+| :---- | :---- |
+| Se cuenta con cambiadores de pañales en sanitarios no sólo de mujeres | Sí |
+| Se cuenta con sanitarios tipo familiares o de acceso universal, que posibilitan el cuidado de las infancias. | Sí |
+| Se cuenta con estancias de cuidados para las infancias | Sí |
+| Se cuentan con espacios de juego y recreativos para las infancias (ludotecas) | Sí |
+| Se cuenta con insumos para la menstruación digna | Sí |
+| Se cuenta con espacios acondicionados para la accesibilidad a personas con discapacidades | Sí |
+| Se cuenta con espacios acondicionados para el descanso y el autocuidado | Sí |
+| Se cuenta con enfermerías o áreas de atención de la salud | Sí |
+| La infraestructura destinada para el ejercicio de los cuidados es accesible a todos los sectores de la comunidad, incluyendo el sector estudiantil | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores está dirigida la infraestructura para el acceso y ejercicio de los cuidados en corresponsabilidad?**
+
+@TODOS
+
+**¿Qué instancias cuentan con infraestructura para el acceso y ejercicio de los cuidados en corresponsabilidad?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 3.4 Servicios para el acceso y ejercicio de cuidados en corresponsabilidad {#observable-3.4-servicios-para-el-acceso-y-ejercicio-de-cuidados-en-corresponsabilidad}
+
+Pregunta inicial:
+**27\. ¿La IES cuenta con convenios y servicios brindados por instancias externas para el acceso y ejercicio de cuidados, superiores a la ley?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los convenios y servicios para los cuidados?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Servicio externo gratuito de cuidado de niñas/os/es adicional a las instancias infantiles del IMSS y el ISSSTE | Sí |
+| :---- | :---- |
+| Servicios gratuitos de salud psico-emocional   | Sí |
+| Convenios para obtener precios preferenciales en servicios de cuidados para las infancias | Sí |
+| Convenios para acceso a precios preferenciales de salud psico-emocional | Sí |
+| Actividades y prestación de servicios de cuidados de infancias y adolescencias en periodos vacacionales, días de asueto, viernes de Consejo Técnico (escuelas públicas), o situaciones especiales que no se concilian con el calendario de las IES | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Cuáles de los siguientes sectores son beneficiarios de los convenios y servicios para los cuidados?**
+
+@TODOS
+
+**¿Qué instancias ofrecen dichos servicios para los cuidados?**
+
+1 instancias académicas
+1 instancias administrativas
+
+##
+
+## **Eje de políticas de no discriminación y una vida libre de violencias** {#eje-de-políticas-de-no-discriminación-y-una-vida-libre-de-violencias}
+
+### **4\. Materia: Una vida libre de discriminaciones y violencias** {#4.-materia:-una-vida-libre-de-discriminaciones-y-violencias}
+
+#### **Componente: Normas y políticas institucionales** {#componente:-normas-y-políticas-institucionales-1}
+
+##### Observable 4.1. Proceso de armonización normativa {#observable-4.1.-proceso-de-armonización-normativa}
+
+Pregunta inicial:
+
+**28\. La IES ha llevado a cabo un proceso formal para armonizar su legislación o normatividad interna en materia de violencias contra las mujeres y otras formas de violencias basadas en el género, conforme a la Ley General de Educación Superior y otra normatividad vigente en la misma materia?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿En qué términos se ha realizado este proceso?**
+
+Marque todas las características o elementos que resulten aplicables a este instrumento:
+
+| Análisis general de las normas vigentes y aplicables a la IES y sus funciones, en materia de una vida libre de violencia para las mujeres.  | Sí |
+| :---- | :---- |
+| Análisis general de las normas vigentes y aplicables a la IES y sus funciones, en materia de una vida libre de violencia para otros grupos en situación de vulnerabilidad.  | Sí |
+| Análisis específico de la normatividad vigente en materia de una vida libre de violencia para las mujeres. | Sí |
+| Análisis específico de la normatividad vigente en materia de una vida libre de violencia para otros grupos en situación de vulnerabilidad. | Sí |
+| Identificación de actualizaciones, modificaciones o desarrollo de disposiciones internas, derivado del análisis normativo. | Sí |
+| Planificación o programación de una ruta de modificaciones normativas. | Sí |
+| Aplicación de las actualizaciones, modificaciones o desarrollo de disposiciones internas. | Sí          |
+| La armonización da cumplimiento al conjunto de obligaciones legales aplicables a la IES en estas materias. | Sí |
+| Proceso participativo para la armonización normativa interna. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué instancias académicas y administrativas se consideró para este proceso de armonización?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 4.2 Legislación para la atención de casos de discriminación / violencia basada en el género {#observable-4.2-legislación-para-la-atención-de-casos-de-discriminación-/-violencia-basada-en-el-género}
+
+Pregunta inicial:
+**29\. ¿La IES cuenta con legislación en materia de atención de la discriminación y violencia por razones de género (distinta a los protocolos de atención)?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en dicha legislación?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| La IES incluye en su legislación a la violencia por razones de género hacia las mujeres como causa de responsabilidad aplicable de todos los sectores de su comunidad. | Sí |
+| :---- | :---- |
+| La IES incluye en su legislación a la violencia por razones de género hacia otros grupos en situación de vulnerabilidad como causa de responsabilidad aplicable a todos los sectores de su comunidad. | Sí |
+| La IES cuenta con un marco normativo específico que establece la responsabilidad de actuación ante casos de violencia y discriminación por razones de género para las mujeres. | Sí |
+| La IES cuenta con un marco normativo específico que establece la responsabilidad de actuación ante casos de violencia y discriminación por razones de género para otros grupos en situación de vulnerabilidad.  | Sí |
+| Las normas existentes tienen carácter jurídicamente vinculante y de observancia obligatoria | Sí |
+| Las normas se encuentran vigentes sin una temporalidad o fecha de término de vigencia, y son resultado de un proceso interno de formalización, de acuerdo con las normas y procedimientos previstos por la propia IES. | Sí |
+| Su contenido explicita o desagrega cuál es alcance o ámbito de aplicación de sus disposiciones dentro de la IES | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores es aplicable la legislación para la actuación ante casos de violencia de género?**
+
+@TODOS
+
+**¿Qué instancias aplican la legislación para la actuación ante casos de violencia de género?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 4.3 Normas específicas para la atención de casos de discriminación / violencia basada en el género {#observable-4.3-normas-específicas-para-la-atención-de-casos-de-discriminación-/-violencia-basada-en-el-género}
+
+Pregunta inicial:
+**30\. ¿La IES cuenta con un instrumento (tipo protocolo) de actuación ante casos de discriminación y violencia por razones de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en dicho instrumento?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se trata de un instrumento institucional específico para actuar ante la discriminación y violencia por razones de género contra las mujeres. | Sí |
+| :---- | :---- |
+| Se trata de un instrumento institucional específico para actuar ante la discriminación y violencia por razones de género contra otros grupos en situación de vulnerabilidad.  | Sí |
+| Se encuentra formalizado y es de observancia obligatoria para el personal encargado de la atención y resolución de casos al interior de la IES. | Sí |
+| Define la coordinación entre las áreas responsables de la atención de la discriminación y la violencia a fin de garantizar la debida diligencia.  | Sí |
+| Establece principios de atención y actuación con enfoque de género hacia las mujeres, interseccionalidad y derechos humanos. | Sí |
+| Establece principios de atención y actuación con enfoque de género hacia otros grupos en situación de vulnerabilidad, interseccionalidad y derechos humanos. | Sí |
+| Es armónico con los estándares de mayor protección a las personas en situación de víctima | Sí |
+| Cuenta con mecanismos no sancionatorios para modificar condiciones de desigualdad y discriminación por razones de género en contra de las mujeres en la IES. | Sí |
+| Cuenta con mecanismos no sancionatorios para modificar condiciones de desigualdad y discriminación por razones de género en contra de otros grupos en situación de vulnerabilidad en la IES. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores considera dicho instrumento?**
+
+@TODOS
+
+**¿En qué instancias se implementa dicho instrumento?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 4.4. Personas de primer contacto especializadas en materia de violencias de género {#observable-4.4.-personas-de-primer-contacto-especializadas-en-materia-de-violencias-de-género}
+
+Pregunta inicial:
+
+**31\. La institución cuenta con figuras de primer contacto calificado, competente y especializado para orientar a personas que consideren haber sido víctimas de violencia por razones de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas)
+
+#####
+
+Variable A. Pregunta específica
+
+**¿En qué términos?**
+
+Marque todas las características o elementos que resulten aplicables a este instrumento:
+
+| Las personas que brindan atención de primer contacto fueron capacitadas para llevar a cabo su labor con enfoque de género hacia las mujeres, derechos humanos y atención de las violencias. | Sí |
+| :---- | :---- |
+| Las personas que brindan atención de primer contacto fueron capacitadas para llevar a cabo su labor con enfoque de género hacia otros grupos en situación de vulnerabilidad, derechos humanos y atención de las violencias. | Sí |
+| Las personas que brindan atención de primer contacto fueron seleccionadas a partir de un proceso de valoración de sus perfiles con enfoque de género hacia las mujeres, derechos humanos y atención de las violencias. | Sí |
+| Las personas que brindan atención de primer contacto fueron seleccionadas a partir de un proceso de valoración de sus perfiles con enfoque de género hacia otros grupos en situación de vulnerabilidad, derechos humanos y atención de las violencias. | Sí |
+| Existe un código de conducta y/o reglamento que regula la práctica de las figuras de primer contacto. | Sí |
+| Las personas que brindan atención de primer contacto reciben formación continua y actualización en estándares vinculados con la atención de violencia por razones de género hacia las mujeres. | Sí |
+| Las personas que brindan atención de primer contacto reciben formación continua y actualización en estándares vinculados con la atención de violencia por razones de género hacia otros grupos en situación de vulnerabilidad. | Sí |
+| Las personas que brindan atención de primer contacto están certificadas en el estándar de competencia EC0539. Atención presencial de primer contacto a mujeres víctimas de violencia de género. | Sí          |
+| El programa de primer contacto ha sido evaluado en términos de sus resultados alcanzados, considerando la satisfacción de las personas usuarias. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué poblaciones se consideró este proceso de armonización?**
+
+@TODOS
+
+**¿A cuántas instancias académicas y administrativas se consideró para este proceso de armonización?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+#####
+
+#####
+
+#####
+
+##### Observable 4.5 Políticas y medidas de prevención secundaria y terciaria de las discriminaciones / violencias basadas en el género enfocadas a las personas responsables de su ejercicio {#observable-4.5-políticas-y-medidas-de-prevención-secundaria-y-terciaria-de-las-discriminaciones-/-violencias-basadas-en-el-género-enfocadas-a-las-personas-responsables-de-su-ejercicio}
+
+Pregunta inicial:
+
+**32\. ¿La IES cuenta con políticas y/o medidas de protección inmediata ante situaciones de violencia por razones de género para evitar su reiteración o la ampliación de sus efectos?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en las políticas y medidas de protección inmediata de las discriminaciones / violencias basadas en el género?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se establecen de manera oficial y existe una instancia responsable de su emisión | Sí |
+| :---- | :---- |
+| Una vez que se emiten, son vinculantes para las áreas de la IES que tengan alguna responsabilidad en su implementación | Sí |
+| Se emiten de manera provisional y sin necesidad de haber concluido un proceso de investigación y/o sanción | Sí |
+| Incluye enfoque de víctimas, a fin de que se diseñen conforme a las necesidades y particularidades de la persona que se encuentra en dicha situación | Sí |
+| Prevén la posibilidad de que sean dirigidas a la persona señalada como agresora a fin de que desista de cualquier violencia o represalia | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Qué sectores están considerados en el diseño de las medidas de protección inmediata?**
+
+@TODOS
+
+**¿En cuántas instancias se implementan medidas de protección inmediata?**
+
+1 instancias académicas
+1 instancias administrativas
+
+
+####
+
+#### **Componente: Estructuras institucionales** {#componente:-estructuras-institucionales}
+
+##### Observable 4.6 Estructuras especializadas para la atención de casos de discriminación / violencia basadas en el género {#observable-4.6-estructuras-especializadas-para-la-atención-de-casos-de-discriminación-/-violencia-basadas-en-el-género}
+
+Pregunta inicial:
+
+**33\. ¿La IES cuenta con estructuras especializadas para atender casos de discriminación y violencia basada en el género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en las estructuras especializadas para atender casos de discriminación / violencia basada en el género?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Las estructuras se encuentran institucionalizadas en la normatividad de la IES, con validez y vinculación jurídica | Sí |
+| :---- | :---- |
+| Las estructuras cuentan con atribuciones claras en materia de atención a la violencia de género hacia las mujeres y resolución de los casos | Sí |
+| Las estructuras cuentan con atribuciones claras en materia de atención a la violencia de género hacia otros grupos en situación de vulnerabilidad y resolución de los casos | Sí |
+| Las instancias cuentan con una estructura interna que define áreas y funciones organizacionales para la adecuada atención de los casos | Sí |
+| Las estructuras cuentan con recursos humanos, materiales y financieros propios | Sí |
+| Establece claramente su alcance o ámbito de competencia | Sí |
+| Las estructuras prevén las canalizaciones y acompañamiento a instancias internas o externas, en los casos que sean necesarios | Sí |
+| Las instancias cuentan con áreas especializadas en violencias por razones de género hacia las mujeres | Sí |
+| Las instancias cuentan con áreas especializadas en violencias por razones de género hacia otros grupos en situación de vulnerabilidad. | Sí |
+| Las instancias tienen capacidad sancionatoria en los casos de violencias por razones de género hacia las mujeres | Sí |
+| Las instancias tienen capacidad sancionatoria en los casos de violencias por razones de género hacia otros grupos en situación de vulnerabilidad. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿A qué sectores son accesibles dichas instancias especializadas?**
+
+@TODOS
+
+**¿Cuántas instancias cuentan con enlaces u oficinas para la presentación de quejas por violencia de género?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 4.7 Puestos especializados para la atención de casos de discriminación / violencias basadas en el género {#observable-4.7-puestos-especializados-para-la-atención-de-casos-de-discriminación-/-violencias-basadas-en-el-género}
+
+Pregunta inicial:
+**34\. ¿La IES establece descripciones de puesto especializados para atender casos de discriminación / violencia basada en el género, institucionalizados mediante documentos administrativos que sirvan como referente para el reclutamiento, selección y ocupación de los puestos?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en las descripciones de puesto profesionales especializados en materia de discriminación / violencia basada en el género?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Las descripciones de puestos se establecen de manera formal en la normatividad interna de las estructuras responsables de la atención de la violencia por razones de género | Sí |
+| :---- | :---- |
+| Se solicita que la persona titular de la estructura para la atención de casos acredite experiencia y formación suficiente en materia de violencias por razones de género hacia las mujeres | Sí |
+| Se solicita que la persona titular de la estructura para la atención de casos acredite experiencia y formación suficiente en materia de violencias por razones de género hacia otros grupos en situación de vulnerabilidad | Sí |
+| Se ofrecen procesos de profesionalización y capacitación por parte de las IES para el personal en atención a las violencia de violencias por razones de género hacia las mujeres | Sí |
+| Se ofrecen procesos de profesionalización y capacitación por parte de las IES para el personal en atención a las violencia de violencias por razones de género hacia otros grupos en situación de vulnerabilidad | Sí |
+| Se solicita que las abogadas contratadas acrediten formación y experiencia suficiente en atención de violencias por razones de género hacia las mujeres | Sí |
+| Se solicita que las abogadas contratadas acrediten formación y experiencia suficiente en atención de violencias por razones de género hacia otros grupos en situación de vulnerabilidad | Sí |
+| Se solicita que las psicólogas contratadas acrediten formación y experiencia suficiente en atención de violencias por razones de género hacia las mujeres | Sí |
+| Se solicita que las psicólogas contratadas acrediten formación y experiencia suficiente en atención de violencias por razones de género hacia otros grupos en situación de vulnerabilidad. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En cuántas instancias existe personal especializado para la atención de las violencias por razones de género?**
+
+1 instancias académicas
+1 instancias administrativas
+
+##### Observable 4.8 Servicios especializados para la atención de casos de discriminación / violencia basadas en el género {#observable-4.8-servicios-especializados-para-la-atención-de-casos-de-discriminación-/-violencia-basadas-en-el-género}
+
+Pregunta inicial:
+
+**35\. ¿La IES ofrece servicios especializados para las personas denunciantes, adicionales a la formalización de su procedimiento formal (queja, denuncia, etc.)?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los servicios especializados que ofrece la IES en el marco de la atención de casos de discriminación / violencia basada en el género?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se ofrecen servicios de orientación previos a la presentación formal del procedimiento (queja, denuncia, etc.) o de primer contacto, con enfoque de género e interseccionalidad | Sí |
+| :---- | :---- |
+| Se ofrecen servicios de primeros auxilios psicológicos y de contención psicoemocional | Sí |
+| Se ofrecen servicios completos de acompañamiento psicoemocional | Sí |
+| Se ofrecen servicios de notificación continua y oportuna del estatus del caso | Sí |
+| Se ofrece asesoría y/o acompañamiento legal para presentación de denuncias en el ámbito judicial | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Para qué sectores están disponibles dichos servicios?**
+
+@TODOS
+
+**¿En cuántas instancias se cuenta con dichos servicios especializados?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 4.9 Responsabilidades de actuación para atender casos de discriminación y violencia basada en el género {#observable-4.9-responsabilidades-de-actuación-para-atender-casos-de-discriminación-y-violencia-basada-en-el-género}
+
+Pregunta inicial:
+**36\. ¿La IES establece responsabilidades de actuación que involucran el vínculo con instancias externas para atender casos de discriminación y violencia basada en el género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en la vinculación interinstitucional para la atención de las violencias?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se establece la responsabilidad de coordinación con otras instituciones con las que la IES tenga vínculos académicos, diplomáticos, de proyectos de colaboración, etcétera, para la atención de casos que requieran una actuación coordinada cuando alguna de las partes en una situación de violencia se encuentre o pertenezca a tales instituciones | Sí |
+| :---- | :---- |
+| Se establece la responsabilidad de notificar a las autoridades judiciales sobre hechos que constituyan delitos | Sí |
+| Se establece la responsabilidad de asistir a personas en situación de víctima que decidan presentar una denuncia judicial | Sí |
+| Se establece la responsabilidad de canalizar a servicios de atención psicoemocional a personas en situación de víctima, en caso de no existir disponibilidad del servicio dentro de la IES o no contar con las atribuciones | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Para qué sectores están disponibles dichos servicios?**
+
+@TODOS
+
+**¿En cuántas instancias se ofrecen dichos servicios?**
+
+1 instancias académicas
+1 instancias administrativas
+
+####
+
+####
+
+#### **Componente: Procesos y recursos institucionales** {#componente:-procesos-y-recursos-institucionales-1}
+
+##### Observable 4.10 Criterios de resolución y medidas de no repetición en el marco de la justicia restaurativa {#observable-4.10-criterios-de-resolución-y-medidas-de-no-repetición-en-el-marco-de-la-justicia-restaurativa}
+
+Pregunta inicial:
+**37\. ¿La IES establece la responsabilidad de emitir medidas de justicia restaurativa (no mediación) y/o garantías de no repetición en todos los casos de discriminación y violencia por razones de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en las medidas de justicia restaurativa y/o garantías de no repetición?**
+
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se prevé en la normatividad de la IES que todas las resoluciones ante casos de violencia y discriminación por razones de género hacia las mujeres incluyan medidas de justicia restaurativa y no repetición | Sí |
+| :---- | :---- |
+| Se prevé en la normatividad de la IES que todas las resoluciones ante casos de violencia y discriminación por razones de género hacia otros grupos en situación de vulnerabilidad incluyan medidas de justicia restaurativa y no repetición | Sí |
+| Las actas de resolución incluyen, de manera complementaria a las sanciones, medidas de justicia restaurativa y no repetición de carácter obligatorio | Sí |
+| Las medidas se diferencian de las sanciones y se orientan principalmente a la transformación de las condiciones que posibilitaron las violencias y/o discriminación | Sí |
+| Las medidas incluyen la reparación de afectaciones académicas o administrativas vividas por las personas en situación de víctima dentro de la IES como efecto de la discriminación o violencia (incluyendo acciones de formación y concientización para evitar vuelvan a ocurrir) | Sí |
+| Las medidas incluyen la atención psicoemocional especializada de las personas en situación de víctima como elemento de reparación del daño | Sí |
+| Se establece la posibilidad de emitir medidas dirigidas a las comunidades donde ocurrieron las violencias como medida de reparación del daño colectivo | Sí |
+| Se establece la posibilidad de emitir medidas y recomendaciones para cambiar infraestructura, normas, procedimientos, etcétera, que resulten discriminatorias o hayan posibilitado el ejercicio de las violencias | Sí |
+| Se establece la responsabilidad de que las personas responsables del ejercicio de las violencias, particularmente hombres, acudan a espacios de trabajo reflexivo especializados | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿En qué sectores se implementan las medidas de justicia restaurativa y/o garantías de no repetición?**
+
+@TODOS
+
+**¿A cuántas instancias son aplicables las medidas de justicia restaurativa y/o garantías de no repetición?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 4.11 Mecanismos de seguimiento de casos y cumplimiento de resoluciones {#observable-4.11-mecanismos-de-seguimiento-de-casos-y-cumplimiento-de-resoluciones}
+
+Pregunta inicial:
+**38\. ¿La IES cuenta con mecanismos de seguimiento de casos de discriminación / violencia basada en el género y de las resoluciones emitidas, en el marco de su ámbito de competencia?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en los mecanismos de seguimiento de casos y sus resoluciones emitidas en el ámbito de su competencia?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Existe una instancia con facultades para dar seguimiento integral a los procesos de atención de las violencias, desde su comienzo hasta su conclusión | Sí |
+| :---- | :---- |
+| Se establece la responsabilidad de notificación continua a las personas en situación de víctima de todo el proceso | Sí |
+| Se cuenta con un mecanismo formal para el seguimiento a las medidas de protección emitidas a favor de la persona en situación de víctima, de ser el caso | Sí |
+| Se cuenta con un mecanismo formal para el seguimiento al cumplimiento de las sanciones | Sí |
+| Se cuenta con un mecanismo formal para el seguimiento de las medidas de justicia restaurativa y no repetición | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Qué sectores son considerados en el seguimiento de casos y resoluciones emitidas?**
+
+@TODOS
+
+**¿En cuántas instancias se implementan medidas de seguimiento de casos y resoluciones emitidas?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 4.12 Documentación, sistematización de información y transparencia {#observable-4.12-documentación,-sistematización-de-información-y-transparencia}
+
+Pregunta inicial:
+
+**39\. ¿La IES cuenta con mecanismos de documentación, sistematización de información y transparencia sobre los casos y resoluciones emitidas por discriminación / violencia basada en el género, en su ámbito de competencia?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes en mecanismos de documentación, sistematización de información y transparencia sobre los casos y resoluciones emitidas por discriminación / violencia basada en el género, en su ámbito de competencia?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se establece la obligatoriedad de emitir informes estadísticos sobre la presentación de quejas por violencia y discriminación por razones de género hacia las mujeres atendidos | Sí |
+| :---- | :---- |
+| Se establece la obligatoriedad de emitir informes estadísticos sobre la presentación de quejas por violencia y discriminación por razones de género hacia otros grupos en situación de vulnerabilidad atendidos | Sí |
+| Se establece la obligatoriedad de emitir informes estadísticos sobre la resolución de casos de violencia y discriminación por razones de género hacia las mujeres atendidas | Sí |
+| Se establece la obligatoriedad de emitir informes estadísticos sobre la resolución de casos de violencia y discriminación por razones de género hacia otros grupos en situación de vulnerabilidad atendidos. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Qué sectores son considerados en la emisión de dichos informes?**
+
+@TODOS
+
+**¿Cuántas instancias emiten o participan en la presentación de dichos informes?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 4.13 Evaluación de atención de procedimientos formales (quejas o denuncias) de atención de casos de violencias de género. {#observable-4.13-evaluación-de-atención-de-procedimientos-formales-(quejas-o-denuncias)-de-atención-de-casos-de-violencias-de-género.}
+
+Pregunta inicial:
+
+**40\. ¿La IES ha llevado a cabo un proceso de evaluación de las personas usuarias al momento de presentar un procedimiento formal (queja o denuncia) de atención de casos de violencia por razones de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Existen mecanismos para recabar la opinión de las personas usuarias de los procedimientos formales (queja o denuncia) de atención de casos de violencia por razones de género en contra de las mujeres. | Sí |
+| :---- | :---- |
+| Existen mecanismos para recabar la opinión de las personas usuarias de los procedimientos formales (queja o denuncia) de atención de casos de violencia por razones de género en contra de otros grupos en situación de vulnerabilidad. | Sí |
+| Se establece la obligatoriedad de emitir informes estadísticos de uso interno sobre la satisfacción de las personas usuarias durante proceso de presentación de quejas por violencia y discriminación por razones de género en contra de las mujeres. | Sí |
+| Se establece la obligatoriedad de emitir informes estadísticos de uso interno sobre la satisfacción de las personas usuarias durante proceso de presentación de quejas por violencia y discriminación por razones de género en contra de otros grupos en situación de vulnerabilidad. | Sí |
+| Se establece la obligatoriedad de emitir informes estadísticos públicos sobre la satisfacción de las personas usuarias durante el proceso de presentación de quejas por violencia y discriminación por razones de género en contra de las mujeres. | Sí |
+| Se establece la obligatoriedad de emitir informes estadísticos públicos sobre la satisfacción de las personas usuarias durante el proceso de presentación de quejas por violencia y discriminación por razones de género en contra de otros grupos en situación de vulnerabilidad. | Sí |
+| Existe evidencia de que la IES utiliza las opiniones recabadas de las personas usuarias para optimizar sus mecanismos de atención. | Sí |
+
+Variable B. Pregunta sobre transversalidad (con qué alcance):
+
+**¿Qué sectores son considerados en la emisión de dichos informes?**
+
+@TODOS
+
+**¿Cuántas instancias emiten o participan en la presentación de dichos informes?**
+
+1 instancias académicas
+1 instancias administrativas
+
+#####
+
+##### Observable 4.14 Evaluación de atención de mecanismo de atención de las violencias por razones de género {#observable-4.14-evaluación-de-atención-de-mecanismo-de-atención-de-las-violencias-por-razones-de-género}
+
+Pregunta inicial:
+
+**41\. ¿La IES ha llevado a cabo un proceso de evaluación de su mecanismo de atención de las violencias por razones de género?**
+
+1. No (pasar a la pregunta del siguiente observable)
+2. Sí (responder las preguntas específicas:)
+
+Variable A. Pregunta específica sobre contenido armonizado e institucionalizado (en qué términos):
+
+**¿Cuáles de las siguientes características están presentes?**
+Mencione todas las características o elementos que resulten aplicables:
+
+| Se trata de una evaluación formal que cuenta con objetivos, metodología, resultados y fue realizada por un equipo de evaluación especializado. | Sí |
+| :---- | :---- |
+| Considera dentro de los ámbitos a evaluar la satisfacción de las personas usuarias del mecanismo  | Sí |
+| Existe evidencia de que la IES utiliza las opiniones recabadas de las personas usuarias para optimizar sus mecanismos de atención. | Sí |
+| Considera dentro de los ámbitos a evaluar la eficiencia en la implementación de los procedimientos (tiempo de espera para obtener una primera cita, tiempo de espera para resoluciones, carga de trabajo del personal operativo) | Sí |
+| Considera dentro de los ámbitos a evaluar la eficacia de los procedimientos (tasa de casos resueltos, tasa de casos pendientes). | Sí |
+| Considera dentro de los ámbitos a evaluar el desempeño del personal operativo | Sí |
+| Considera dentro de los ámbitos a evaluar la suficiencia presupuestaria de la instancia responsable del procedimiento de atención | Sí |
+| Considera dentro de los ámbitos a evaluar las resoluciones emitidas por las autoridades competentes | Sí |
+| Considera dentro de los ámbitos a evaluar la armonización del mecanismo con los máximos criterios y estándares de atención a víctimas | Sí |
+| La evaluación ha sido realizada por alguna instancia externa a la responsable del mecanismo de atención | Sí |
+
+# **Sección buenas prácticas** {#sección-buenas-prácticas}
+
+1. **¿Durante los últimos tres años, su institución ha implementado o sostenido alguna política, programa o acción en materia de igualdad de género, no discriminación, cuidados corresponsables y/o una vida libre de violencias que, por su trascendencia o innovación, considere que constituya una práctica exitosa que pudiera ser compartida a nivel nacional? (Puede declarar hasta cinco buenas prácticas)**
+1. Sí
+2. No
+3. No deseo responder
+
+**A continuación, podrá declarar sus buenas prácticas**
+
+Buena práctica 1
+
+1. Por favor, señale el **nombre** de la buena práctica: (140 caracteres)
+
+
+
+|  |
+| :---- |
+
+
+
+2. Por favor, seleccione a qué **eje de observación** del ONIGIES pertenece su buena práctica
+
+   Construcción de igualdad
+
+3. Brevemente, describa la **justificación** de la acción que reporta (¿por qué se identificó que era necesaria o pertinente para su contexto?) (1,000 caracteres)
+
+
+
+|  |
+| :---- |
+
+
+
+4. Brevemente, describa el **objetivo** perseguido con la buena práctica (1,000 caracteres)
+
+
+
+|  |
+| :---- |
+
+
+
+
+5. Brevemente, describa el **proceso** llevado a cabo a cabo para implementar la buena práctica (5,000 caracteres)
+
+
+
+
+
+|  |
+| :---- |
+
+
+
+6. Brevemente, describa las **características** de la buena práctica (5,000 caracteres)
+
+
+
+
+
+|  |
+| :---- |
+
+
+
+
+
+7. Brevemente, describa los **resultados** obtenidos en su IES con la implementación de la buena práctica (2,000 caracteres)
+
+
+
+|  |
+| :---- |
+
+
+
+
+8. De las siguientes razones, ¿cuáles considera su institución o área que son motivos para considerar a la acción que reporta como una buena práctica?
+
+   1. Es novedosa
+   2. Sus resultados son significativos
+   3. Es popular entre la comunidad de la institución
+   4. Se ha mantenido a lo largo del tiempo
+   5. Ha sido replicada por otras instancias
+   6. Otra, ¿cuál?
+
+**Anexo de evidencias**
+
+Por favor, anexe a este espacio cualquier material (documento, imagen, reporte, fotografía)  que contribuya a dimensionar el alcance de la buena práctica que declara. Le pedimos, por favor, no incluir información que contenga datos personales sensibles.
+
+# **Marco conceptual y normativo de la actualización metodológica ONIGIES** {#marco-conceptual-y-normativo-de-la-actualización-metodológica-onigies}
+
+[Marco jurídico y conceptual ONIGIES (actualización metodológica 2024).docx](https://docs.google.com/document/d/1aM9biEoo0vx0DacqKjUQn4i3MebYCVUo/edit?usp=sharing&ouid=113406172915743434840&rtpof=true&sd=true)
+
+```

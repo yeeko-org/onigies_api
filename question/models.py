@@ -1,15 +1,36 @@
 from django.db import models
 
-from indicator.models import Observable
-from pop.models import Sector
+from indicator.models import Observable, Sector
+
+
+# QUESTION_GROUPS = [
+#     ('a_questions', 'Institucionalización', 'a_weight', 'AQuestion'),
+#     ('b_questions', 'Instancias', 'b_weight', 'BQuestion'),
+#     ('population', 'Sectores', 'pop_weight', 'PopulationQuestion'),
+#     ('plans', 'Planes de estudio', 'plan_weight', 'PlanQuestion'),
+#     ('special', 'Pregunta especial', 'special_weight', 'SpecialQuestion')
+# ]
+
+class QuestionGroup(models.Model):
+    name = models.CharField(max_length=100, primary_key=True)
+    weight_name = models.CharField(max_length=40)
+    public_name = models.CharField(max_length=150)
+    model_name = models.CharField(max_length=50)
+    default_weight = models.DecimalField(
+        max_digits=5, decimal_places=2)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Grupo de preguntas"
+        verbose_name_plural = "Grupos de preguntas"
 
 
 class AQuestion(models.Model):
 
     text = models.TextField()
     observable = models.ForeignKey(Observable, on_delete=models.CASCADE)
-    ponderation = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00)
 
     def __str__(self):
         return f"Pregunta: {self.text} ({self.observable.name})"
@@ -40,8 +61,6 @@ class PopulationQuestion(models.Model):
     others_sectors = models.ManyToManyField(Sector, blank=True)
     has_general_planning = models.BooleanField(
         default=False, verbose_name="Tiene la opción de planeación general")
-    ponderation = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00)
 
     def __str__(self):
         return f"Pregunta población: {self.text} ({self.observable.name})"
@@ -51,18 +70,9 @@ class PopulationQuestion(models.Model):
         verbose_name_plural = "Preguntas de población"
 
 
-class QuestionType(models.Model):
-    # plan, body, population, special
-    name = models.CharField(max_length=255)
-    response_format = models.CharField(max_length=255)
-    order = models.IntegerField(default=10)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = "Tipo de pregunta"
-        verbose_name_plural = "Tipos de preguntas"
+class PlanQuestion(models.Model):
+    observable = models.ForeignKey(Observable, on_delete=models.CASCADE)
+    text = models.TextField()
 
 
 class BQuestion(models.Model):
@@ -70,9 +80,6 @@ class BQuestion(models.Model):
     observable = models.ForeignKey(Observable, on_delete=models.CASCADE)
     order = models.IntegerField(default=10)
     text = models.TextField()
-    ponderation = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00)
-    question_type = models.ForeignKey(QuestionType, on_delete=models.CASCADE)
     includes_academic = models.BooleanField(
         blank=True, null=True,
         verbose_name="Incluye entidades académicas")
@@ -92,8 +99,6 @@ class SpecialQuestion(models.Model):
 
     text = models.TextField()
     observable = models.ForeignKey(Observable, on_delete=models.CASCADE)
-    ponderation = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0.00)
 
     def __str__(self):
         return f"Pregunta especial: {self.text} ({self.observable.name})"
@@ -101,3 +106,6 @@ class SpecialQuestion(models.Model):
     class Meta:
         verbose_name = "Pregunta especial"
         verbose_name_plural = "Preguntas especiales"
+
+
+

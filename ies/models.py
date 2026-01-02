@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 
@@ -17,3 +18,98 @@ class Institution(models.Model):
     class Meta:
         verbose_name = "Institución de Educación Superior"
         verbose_name_plural = "Instituciones de Educación Superior"
+
+
+class User(AbstractUser):
+    phone = models.CharField(max_length=100, blank=True)
+    full_editor = models.BooleanField(
+        default=False, verbose_name='Es capturista',
+        help_text='Puede agregar notas, comentarios a los registros,'
+                  'pero no tiene todos los permisos')
+    mini_editor = models.BooleanField(
+        default=False, verbose_name='Servicio social',
+        help_text='Puede modificar ubicaciones y otros detalles')
+
+    def get_full_name(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        if self.first_name or self.last_name:
+            return f"{self.first_name or self.last_name}"
+        return self.username or self.email
+
+    @property
+    def is_full_editor(self):
+        if self.is_anonymous:
+            return False
+        return self.is_superuser or self.is_staff or self.full_editor
+
+    @property
+    def is_admin(self):
+        if self.is_anonymous:
+            return False
+        return self.is_superuser or self.is_staff
+
+
+class Period(models.Model):
+    year = models.IntegerField(primary_key=True, help_text="Año")
+    explanation = models.TextField(
+        verbose_name="Recuento de fechas", blank=True, null=True)
+    good_practices_published = models.BooleanField(
+        verbose_name="Buenas prácticas publicadas", default=False)
+    # published_date = models.DateField(
+    #     null=True, blank=True,
+    #     verbose_name="Fecha de publicación del periodo")
+    results_published = models.BooleanField(
+        verbose_name="Resultados publicados", default=False)
+
+    def __str__(self):
+        return str(self.year)
+
+    class Meta:
+        verbose_name = "Periodo"
+        verbose_name_plural = "Periodos"
+
+
+GROUP_CHOICES = [
+    ("register", "Registro"),
+    ("validation", "Validación"),
+]
+ROLE_CHOICES = [
+    ("validator", "Validador"),
+    ("ies", "Institución"),
+]
+
+
+class StatusControl(models.Model):
+    name = models.CharField(max_length=120, primary_key=True)
+    group = models.CharField(
+        max_length=10, choices=GROUP_CHOICES,
+        verbose_name="grupo de status", default="petition")
+    public_name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    color = models.CharField(
+        max_length=30, blank=True, null=True,
+        help_text="https://vuetifyjs.com/en/styles/colors/")
+    icon = models.CharField(
+        max_length=40, blank=True, null=True,
+        help_text="https://fonts.google.com/icons")
+    order = models.IntegerField(default=4)
+
+    is_final = models.BooleanField(default=False)
+
+    send_ies = models.BooleanField(default=False)
+    strict_ies = models.BooleanField(default=False)
+    send_admin = models.BooleanField(default=False)
+    role = models.CharField(
+        max_length=10, choices=ROLE_CHOICES,
+        verbose_name="rol asociado", default="ies")
+    # is_public = models.BooleanField(default=True)
+    priority = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.group} - {self.public_name}"
+
+    class Meta:
+        ordering = ["group", "order"]
+        verbose_name = "Status de control"
+        verbose_name_plural = "Status de control (TODOS)"
