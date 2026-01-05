@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'question',
     'survey',
     'answer',
+    'ps_schema',
 
 ]
 

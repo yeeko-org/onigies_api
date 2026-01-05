@@ -3,7 +3,7 @@ from django.db import models
 from indicator.models import Observable, Sector
 from ies.models import User, StatusControl
 from question.models import (
-    QuestionGroup, PopulationQuestion, AQuestion, AOption, PlanQuestion,
+    QuestionGroup, ReachQuestion, AQuestion, AOption, PlanQuestion,
     BQuestion, SpecialQuestion)
 from survey.models import Survey
 
@@ -46,16 +46,16 @@ class Comment(models.Model):
         verbose_name_plural = 'Comentarios de encuestas'
 
 
-class PopulationResponse(models.Model):
+class ReachResponse(models.Model):
     survey = models.ForeignKey(
-        Survey, on_delete=models.CASCADE, related_name='population_responses')
+        Survey, on_delete=models.CASCADE, related_name='reach_responses')
     question = models.ForeignKey(
-        PopulationQuestion, on_delete=models.CASCADE, related_name='responses')
+        ReachQuestion, on_delete=models.CASCADE, related_name='responses')
     not_focalized = models.BooleanField(
         verbose_name='No focalizado en sectores específicos',
         default=False)
     sectors = models.ManyToManyField(
-        Sector, related_name='population_responses', blank=True)
+        Sector, related_name='reach_responses', blank=True)
 
     def __str__(self):
         return f"Response to '{self.question.text}'"

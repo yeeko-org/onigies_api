@@ -51,15 +51,18 @@ class Observable(models.Model):
     b_weight = models.DecimalField(
         max_digits=5, decimal_places=2,
         verbose_name="Ponderación cumplimiento")
-    pop_weight = models.DecimalField(
+    reach_weight = models.DecimalField(
         max_digits=5, decimal_places=2, default=0.00,
-        verbose_name="Ponderación población")
+        verbose_name="Ponderación alcance de población")
     plan_weight = models.DecimalField(
         max_digits=5, decimal_places=2, default=0.00,
         verbose_name="Ponderación de planes")
     special_weight = models.DecimalField(
         max_digits=5, decimal_places=2, default=0.00,
         verbose_name="Ponderación especial")
+    pop_weight = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0.00,
+        verbose_name="Ponderación población")
 
     def __str__(self):
         return f"{self.name} ({self.component.name})"

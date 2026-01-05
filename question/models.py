@@ -6,18 +6,19 @@ from indicator.models import Observable, Sector
 # QUESTION_GROUPS = [
 #     ('a_questions', 'Institucionalización', 'a_weight', 'AQuestion'),
 #     ('b_questions', 'Instancias', 'b_weight', 'BQuestion'),
-#     ('population', 'Sectores', 'pop_weight', 'PopulationQuestion'),
+#     ('reach', 'Sectores', 'reach_weight', 'ReachQuestion'),
 #     ('plans', 'Planes de estudio', 'plan_weight', 'PlanQuestion'),
 #     ('special', 'Pregunta especial', 'special_weight', 'SpecialQuestion')
+#     ('population', 'Distribución de población', 'pop_weight')
 # ]
 
 class QuestionGroup(models.Model):
     name = models.CharField(max_length=100, primary_key=True)
     weight_name = models.CharField(max_length=40)
     public_name = models.CharField(max_length=150)
-    model_name = models.CharField(max_length=50)
+    model_name = models.CharField(max_length=50, blank=True, null=True)
     default_weight = models.DecimalField(
-        max_digits=5, decimal_places=2)
+        max_digits=5, decimal_places=2, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -52,7 +53,7 @@ class AOption(models.Model):
         verbose_name_plural = "Opciones de respuesta de institucionalización"
 
 
-class PopulationQuestion(models.Model):
+class ReachQuestion(models.Model):
 
     text = models.TextField()
     observable = models.ForeignKey(Observable, on_delete=models.CASCADE)
@@ -63,11 +64,11 @@ class PopulationQuestion(models.Model):
         default=False, verbose_name="Tiene la opción de planeación general")
 
     def __str__(self):
-        return f"Pregunta población: {self.text} ({self.observable.name})"
+        return f"{self.text} ({self.observable.name})"
 
     class Meta:
-        verbose_name = "Pregunta de población"
-        verbose_name_plural = "Preguntas de población"
+        verbose_name = "Pregunta de alcance de población"
+        verbose_name_plural = "Preguntas de alcance de población"
 
 
 class PlanQuestion(models.Model):

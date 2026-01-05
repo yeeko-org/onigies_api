@@ -7,26 +7,31 @@ Me refiero a:
 - Cambiar las ponderaciones
 - Nombre de los componentes / observables
 
+¿Utilizar la información del año anterior? (revisar si aplica siempre)
+
+DECISIÓN: Sí vamos a registrar los nombres de las instancias académicas y administrativas.
 
 ¿Cuál será el ciclo completo de flujo de trabajo?
 
 Sugiero que primero se aprueben los datos base, antes de comenzar a responder las preguntas.
 
 
-¿Se solicitarán archivos comprobantes para la primera parte?
+¿Se solicitarán archivos comprobantes para la primera parte (Información Base)?
 - Estructuras
 - Poblaciones atendidas
 - Tamaños de población
 - Planes de Estudio
-- Forma de gobierno
+- Forma de Gobierno
 
 ¿Se hará un sistema de comentarios para cada una de estas secciones o una general?
 
+Centralizada - Descentralizada ==> Hay preguntas que la transversalización ocurre en automático con la institucionalización.
+
 OBSERVABLES:
 
-¿Agregamos un campo opcional para explicar o justificar la respuesta, o dejamos que lo pongan en comentarios?
+¿Agregamos un campo opcional para explicar o justificar la respuesta, o dejamos que lo pongan en comentarios? RESPUESTA: Comentarios, solo a petición.
 
-Pregunta específica (¿tiene varias respuestas?)
+Pregunta específica (¿Tiene varias respuestas?)
 
 Los mecanismos y criterios existentes están formalizados y son vinculantes para toda la universidad, especificar:
 Ingreso
@@ -37,10 +42,14 @@ Egreso
 Titulación
 
 
-
 BUENAS PRÁCTICAS:
 
 ¿Usaremos el sistema de comentarios e intercambios?
 
 ¿Cuál será el flujo de aprobación/retroalimentación de las buenas prácticas?
+
+(Está bien la información --> Corrección --> Predictamen --> Aprobadas --> Selección de mejores)
+
+
+Visualización propia de los avances aprobados.
 
