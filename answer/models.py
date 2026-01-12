@@ -46,6 +46,23 @@ class Comment(models.Model):
         verbose_name_plural = 'Comentarios de encuestas'
 
 
+class AResponse(models.Model):
+    survey = models.ForeignKey(
+        Survey, on_delete=models.CASCADE, related_name='a_question_responses')
+    question = models.ForeignKey(
+        AQuestion, on_delete=models.CASCADE, related_name='responses')
+    selected_option = models.ForeignKey(
+        AOption, on_delete=models.CASCADE,
+        related_name='a_responses')
+
+    def __str__(self):
+        return f"Response to '{self.question.text}'"
+
+    class Meta:
+        verbose_name = 'Respuesta a pregunta A'
+        verbose_name_plural = 'Respuestas a preguntas A'
+
+
 class ReachResponse(models.Model):
     survey = models.ForeignKey(
         Survey, on_delete=models.CASCADE, related_name='reach_responses')
@@ -63,23 +80,6 @@ class ReachResponse(models.Model):
     class Meta:
         verbose_name = 'Respuesta de población'
         verbose_name_plural = 'Respuestas de población'
-
-
-class AResponse(models.Model):
-    survey = models.ForeignKey(
-        Survey, on_delete=models.CASCADE, related_name='a_question_responses')
-    question = models.ForeignKey(
-        AQuestion, on_delete=models.CASCADE, related_name='responses')
-    selected_option = models.ForeignKey(
-        AOption, on_delete=models.CASCADE,
-        related_name='a_responses')
-
-    def __str__(self):
-        return f"Response to '{self.question.text}'"
-
-    class Meta:
-        verbose_name = 'Respuesta a pregunta A'
-        verbose_name_plural = 'Respuestas a preguntas A'
 
 
 class PlanResponse(models.Model):

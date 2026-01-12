@@ -1,6 +1,6 @@
 from ps_schema.models import Level, Collection, FilterGroup
 from ps_schema.constants import (
-    all_collections, filter_groups, delete_collections)
+    all_collections, filter_groups, delete_collections, delete_filter_groups)
 
 
 class InitLevels:
@@ -173,6 +173,10 @@ class InitFilterGroups:
         # collections_dict = {
         #     f"{collection.app_label}-{collection.snake_name}": collection
         #     for collection in Collection.objects.all()}
+        for filter_group_snake_name in delete_filter_groups:
+            print(f"Deleting filter group: {filter_group_snake_name}")
+            FilterGroup.objects.filter(
+                key_name=filter_group_snake_name).delete()
         collections_dict = {}
         for collection in Collection.objects.all():
             key = f"{collection.app_label}-{collection.snake_name}"
@@ -186,15 +190,9 @@ class InitFilterGroups:
             # print("collection_group", collections_dict.get(category_group, None))
             filter_group, _ = FilterGroup.objects.get_or_create(
                 key_name=group['key_name'],
-                defaults=dict(
-                    main_collection=collections_dict.get(
-                        group['main_collection'], None),
-                )
             )
             filter_group.name = group.get('name', "Sin nombre")
             filter_group.plural_name = group.get('plural_name', "Sin nombre plural")
-            filter_group.main_collection = collections_dict.get(
-                group['main_collection'], None)
             filter_group.category_group = collections_dict.get(
                 group.get('category_group', None), None)
             filter_group.category_type = collections_dict.get(

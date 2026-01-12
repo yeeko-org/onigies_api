@@ -1,5 +1,7 @@
 from rest_framework import serializers
+# from django.contrib.auth.models import User
 from rest_framework.validators import UniqueValidator
+# from classify_task.models import UserProfile
 from ies.models import User
 
 
@@ -22,8 +24,8 @@ class UserRegistrationSerializer(serializers.Serializer):
 class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=False, allow_blank=True)
     email = serializers.EmailField(required=False, allow_blank=True)
-    # password = serializers.CharField(
-    #     required=True, style={'input_type': 'password'})
+    password = serializers.CharField(
+        required=True, style={'input_type': 'password'})
     key = serializers.CharField(required=False)
 
 

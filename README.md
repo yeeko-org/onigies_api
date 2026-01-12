@@ -95,11 +95,17 @@ python manage.py migrate
 ```bash
 python manage.py createsuperuser
 ```
-
+Crear la extensión unaccent en PostgreSQL
+```bash
+CREATE EXTENSION IF NOT EXISTS unaccent;
+```
 ### Cargar los datos iniciales
 
 ```bash
+python manage.py migrate_initial_data
+python manage.py load_main_axis
 
+python manage.py migrate_ps_schemas
 ```
 
 

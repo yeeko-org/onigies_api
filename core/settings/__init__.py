@@ -16,8 +16,17 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'your-secret-key')
 DEBUG = getenv_bool("DJANGO_DEBUG", False)
 
 ALLOWED_HOSTS = getenv_list("ALLOWED_HOSTS", ["*"])
-CORS_ALLOW_ALL_ORIGINS = getenv_bool("CORS_ALLOW_ALL_ORIGINS", False)
-CORS_ORIGIN_ALLOW_ALL = getenv_bool("CORS_ORIGIN_ALLOW_ALL", False)
+# CORS_ALLOW_ALL_ORIGINS = getenv_bool("CORS_ALLOW_ALL_ORIGINS", False)
+
+_CSRF_TRUSTED_ORIGINS = getenv_list("CSRF_TRUSTED_ORIGINS")
+if _CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS = _CSRF_TRUSTED_ORIGINS
+
+# CORS_ORIGIN_ALLOW_ALL = getenv_bool("CORS_ORIGIN_ALLOW_ALL", False)
+CORS_ORIGIN_ALLOW_ALL = True
+USE_X_FORWARDED_HOST = getenv_bool("USE_X_FORWARDED_HOST", True)
+HTTP_X_FORWARDED_HOST = os.getenv("HTTP_X_FORWARDED_HOST")
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -78,7 +87,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-AUTH_USER_MODEL = 'ies.models.User'
+AUTH_USER_MODEL = 'ies.User'
 
 
 POSTRGRESQL_DB = getenv_bool('POSTRGRESQL_DB', False)

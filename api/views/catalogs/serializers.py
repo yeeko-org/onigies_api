@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ies.models import StatusControl
+from ies.models import StatusControl, Institution, Period
 from ps_schema.models import Level, Collection, FilterGroup
 
 
@@ -24,4 +24,16 @@ class CollectionSerializer(serializers.ModelSerializer):
 class FilterGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = FilterGroup
+        fields = "__all__"
+
+
+class InstitutionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Institution
+        fields = "__all__"
+
+
+class PeriodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Period
         fields = "__all__"

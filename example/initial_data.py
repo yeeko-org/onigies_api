@@ -1,7 +1,7 @@
 from .models import Feature, FeatureOption
 
 
-class InitStatus:
+class InitFeatures:
     def __init__(self):
 
         init_features = [

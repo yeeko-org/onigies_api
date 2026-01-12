@@ -53,3 +53,5 @@ BUENAS PRÁCTICAS:
 
 Visualización propia de los avances aprobados.
 
+
+# Se registrarán las entidades / Nacional?

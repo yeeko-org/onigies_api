@@ -5,9 +5,9 @@ from django.db import models
 class Institution(models.Model):
 
     name = models.CharField(max_length=255, help_text="Nombre completo")
-    logo = models.ImageField(upload_to="ies")
+    logo = models.ImageField(upload_to="ies", blank=True, null=True)
     acronym = models.CharField(max_length=50, help_text="Siglas únicas")
-    year_start = models.IntegerField(default=2026)
+    year_start = models.IntegerField(blank=True, null=True)
     year_end = models.IntegerField(blank=True, null=True)
     is_public = models.BooleanField(
         blank=True, null=True, help_text="Es una institución pública?")
@@ -19,6 +19,23 @@ class Institution(models.Model):
         verbose_name = "Institución de Educación Superior"
         verbose_name_plural = "Instituciones de Educación Superior"
 
+# init_institutions = [
+#     {
+#         "name": "Instituto Politécnico Nacional",
+#         "acronym": "IPN",
+#         "is_public": True,
+#     },
+#     {
+#         "name": "Universidad Nacional Autónoma de México",
+#         "acronym": "UNAM",
+#         "is_public": True,
+#     },
+#     {
+#         "name": "Tecnológico de Monterrey",
+#         "acronym": "ITESM",
+#         "is_public": False,
+#     },
+# ]
 
 class User(AbstractUser):
     phone = models.CharField(max_length=100, blank=True)

@@ -44,5 +44,5 @@ class CollectionAdmin(admin.ModelAdmin):
 @register(FilterGroup)
 class FilterGroupAdmin(admin.ModelAdmin):
     list_display = (
-        'key_name', 'name', 'main_collection', 'order')
+        'key_name', 'name', 'order')
     list_editable = ('order',)

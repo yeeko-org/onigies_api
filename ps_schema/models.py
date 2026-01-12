@@ -108,10 +108,6 @@ class FilterGroup(models.Model):
         blank=True, null=True, verbose_name="Descripción")
     order = models.SmallIntegerField(
         default=5, verbose_name="Orden de aparición")
-    main_collection = models.ForeignKey(
-        Collection, on_delete=models.CASCADE,
-        verbose_name="Colección principal",
-        related_name='filters')
     # filter_collections = models.ManyToManyField(
     #     Collection, blank=True, verbose_name="Filtros de la colección")
 

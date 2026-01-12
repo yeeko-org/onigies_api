@@ -1,7 +1,6 @@
 from django.db import models
-
 from indicator.models import Axis, Component
-from ies.models import User, Period, StatusControl
+from ies.models import User, Period, StatusControl, Institution
 
 
 class Feature(models.Model):
@@ -37,9 +36,27 @@ class FeatureOption(models.Model):
         verbose_name_plural = "Opciones de características"
 
 
-class GoodPractice(models.Model):
+class GoodPracticePackage(models.Model):
+    institution = models.ForeignKey(
+        Institution, on_delete=models.CASCADE, related_name='packages')
     period = models.ForeignKey(
-        Period, on_delete=models.CASCADE, related_name='good_practices')
+        Period, on_delete=models.CASCADE, related_name='packages')
+    status_sending = models.ForeignKey(
+        StatusControl, on_delete=models.CASCADE, blank=True, null=True)
+    comments = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Paquete de Buenas Prácticas - {self.institution.name} - {self.period.name}"
+
+    class Meta:
+        verbose_name = "Envío de Buenas Prácticas"
+        verbose_name_plural = "Envío de Buenas Prácticas"
+
+
+class GoodPractice(models.Model):
+    package = models.ForeignKey(
+        GoodPracticePackage, on_delete=models.CASCADE,
+        related_name='good_practices')
     axis = models.ForeignKey(
         Axis, on_delete=models.CASCADE, related_name='good_practices')
     component = models.ForeignKey(
@@ -70,6 +87,10 @@ class FeatureGoodPractice(models.Model):
 
     def __str__(self):
         return f"{self.good_practice.name} - {self.feature.name}"
+
+    class Meta:
+        verbose_name = "Valor de Característica de Buena Práctica"
+        verbose_name_plural = "Valores de Características de Buenas Prácticas"
 
 
 class Evidence(models.Model):

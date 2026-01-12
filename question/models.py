@@ -3,22 +3,29 @@ from django.db import models
 from indicator.models import Observable, Sector
 
 
-# QUESTION_GROUPS = [
-#     ('a_questions', 'Institucionalización', 'a_weight', 'AQuestion'),
-#     ('b_questions', 'Instancias', 'b_weight', 'BQuestion'),
-#     ('reach', 'Sectores', 'reach_weight', 'ReachQuestion'),
-#     ('plans', 'Planes de estudio', 'plan_weight', 'PlanQuestion'),
-#     ('special', 'Pregunta especial', 'special_weight', 'SpecialQuestion')
-#     ('population', 'Distribución de población', 'pop_weight')
-# ]
+QUESTION_GROUPS = [
+    ('a_questions', 'Institucionalización', 'a_weight',
+    'AQuestion', 'AResponse'),
+    ('b_questions', 'Instancias', 'b_weight',
+    'BQuestion', 'BResponse'),
+    ('reach', 'Sectores', 'reach_weight',
+    'ReachQuestion', 'ReachResponse'),
+    ('plans', 'Planes de estudio', 'plan_weight',
+    'PlanQuestion', 'PlanResponse'),
+    ('special', 'Pregunta especial', 'special_weight',
+    'SpecialQuestion', 'SpecialResponse'),
+    ('population', 'Distribución de población', 'pop_weight',
+    None, None),
+]
 
 class QuestionGroup(models.Model):
     name = models.CharField(max_length=100, primary_key=True)
     weight_name = models.CharField(max_length=40)
     public_name = models.CharField(max_length=150)
-    model_name = models.CharField(max_length=50, blank=True, null=True)
+    model_question = models.CharField(max_length=50, blank=True, null=True)
     default_weight = models.DecimalField(
         max_digits=5, decimal_places=2, blank=True, null=True)
+    model_response = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return self.name

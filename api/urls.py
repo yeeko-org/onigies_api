@@ -3,11 +3,15 @@ from rest_framework.routers import DefaultRouter
 
 from .views import health_check
 from api.views.auth.login_views import UserLoginAPIView
+
+from api.views.ps_schemas.views import CollectionViewSet
+from api.views.example.example_views import GoodPracticeViewSet
 # from api.views.stop import StationViewSet
 # from api.views.report import StairReportViewSet, AscertainableViewSet
 
 
 router = DefaultRouter()
+
 
 # router.register(r'station', StationViewSet, basename='station')
 # router.register(r'stair_report', StairReportViewSet, basename='stair_report')
@@ -17,6 +21,8 @@ router = DefaultRouter()
 #     basename='stair_report_evidence_image'
 # )
 # )
+router.register(r'collection', CollectionViewSet, basename='collection')
+router.register(r'good_practice', GoodPracticeViewSet, basename='good_practice')
 
 
 urlpatterns = [

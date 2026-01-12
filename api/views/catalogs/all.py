@@ -5,64 +5,65 @@ from rest_framework import permissions
 # from ies.models import User
 # from api.views.auth.serializers import UserProfileSerializer
 
-# from stop.models import Stop, Station, Route
-# from api.views.stop.serializers import (
-#     StopCatSerializer, StationCatSerializer,
-#     RouteCatSerializer,
-# )
-# from django.db.models import OuterRef, Subquery
-
-# from stair.models import Stair
-# from report.models import StairReport
-# from api.views.stair.serializers import StairCatSerializer
-
+from ies.models import Institution, Period, StatusControl
+from indicator.models import Axis, Component, Observable, Sector
+from example.models import Feature
+from question.models import AOption
+from ps_schema.models import Level, Collection, FilterGroup
+from api.views.catalogs.serializers import (
+    StatusControlSerializer,
+    LevelSerializer,
+    CollectionSerializer,
+    FilterGroupSerializer,
+    InstitutionSerializer,
+    PeriodSerializer,
+)
+from api.views.indicator.serializers import (
+    AxisSerializer,
+    ComponentSerializer,
+    ObservableSerializer,
+    SectorSerializer,
+)
+from api.views.example.serializers import FeatureSerializer
+from api.views.question.serializers import AOptionSerializer
 
 class CatalogsView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def get(self, request):
 
-        # metro_stops = Stop.objects.filter(location_type=1)
-        # # all_stairs = Stair.objects.all().select_related('stop')
-        # all_stations = Station.objects.all().prefetch_related('stops')
-        # latest_report = StairReport.objects.filter(
-        #     stair=OuterRef('pk')
-        # ).order_by('-id')
-        # all_stairs = Stair.objects.annotate(
-        #     is_working=Subquery(latest_report.values('is_working')[:1]),
-        #     status_maintenance=Subquery(latest_report.values('status_maintenance')[:1]),
-        #     date_reported=Subquery(latest_report.values('date_reported')[:1]),
-        #     user_id=Subquery(latest_report.values('user_id')[:1]),
-        # ).select_related('stop')
-
         catalogs = {
             # "user": UserProfileSerializer(
             #     User.objects.all(), many=True).data,
-            # "routes": RouteCatSerializer(
-            #     Route.objects.all(), many=True).data,
-            # "stops": StopCatSerializer(
-            #     metro_stops, many=True).data,
-            # "stations": StationCatSerializer(
-            #     all_stations, many=True).data,
-            # "stairs": StairCatSerializer(
-            #     all_stairs, many=True).data,
+            "period": PeriodSerializer(
+                Period.objects.all(), many=True).data,
+            "institution": [],
+
+            "status_control": StatusControlSerializer(
+                StatusControl.objects.all(), many=True).data,
+            "levels": LevelSerializer(
+                Level.objects.all(), many=True).data,
+            "collections": CollectionSerializer(
+                Collection.objects.all(), many=True).data,
+            "filter_groups": FilterGroupSerializer(
+                FilterGroup.objects.all(), many=True).data,
+
+            "axis": AxisSerializer(
+                Axis.objects.all(), many=True).data,
+            "component": ComponentSerializer(
+                Component.objects.all(), many=True).data,
+            "observable": ObservableSerializer(
+                Observable.objects.all(), many=True).data,
+            "sector": SectorSerializer(
+                Sector.objects.all(), many=True).data,
+
+            "feature": FeatureSerializer(
+                Feature.objects.all(), many=True).data,
+            "a_option": AOptionSerializer(
+                AOption.objects.all(), many=True).data,
         }
-
-
-        # query_stair = { 'stair': OuterRef('id') }
-        # last_report = StairReport.objects.filter(**query_stair) \
-        #     .order_by('-id')
-        # annotations = {
-        #     "stair_report_id": Subquery(last_report.values('id')[:1]),
-        #     "stair_report__is_working": Subquery(
-        #         last_report.values('is_working')[:1]),
-        #     "stair_report__status_maintenance": Subquery(
-        #         last_report.values('status_maintenance')[:1]),
-        #     "stair_report__date_reported": Subquery(
-        #         last_report.values('date_reported')[:1]),
-        # }
-        # queryset_stairs = Stair.objects.filter(stair_reports__isnull=False) \
-        #     .annotate(annotations)
-
+        if self.request.user.is_authenticated:
+            catalogs["institution"] = InstitutionSerializer(
+                Institution.objects.all(), many=True).data,
 
         return Response(catalogs)

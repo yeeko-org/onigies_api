@@ -58,6 +58,7 @@ class UnaccentSearchFilter(SearchFilter):
 
 
 class BaseViewSet(CustomDeleteMixin, viewsets.ModelViewSet):
+# class BaseViewSet(viewsets.ModelViewSet):
 
     pagination_class = CustomPagination
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
