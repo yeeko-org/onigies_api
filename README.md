@@ -1,5 +1,3 @@
-# API y base de datos ONIGIES versión 3 (Observatorio Nacional para la Igualdad de Género en las Instituciones de Educación Superior) 
-
 ## Pasos iniciales:
 - Tener instalado Python 3, mínimo 3.13
 

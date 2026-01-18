@@ -15,6 +15,14 @@ class Institution(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        periods = Period.objects.all()
+        for period in periods:
+            self.surveys.create(period=period)
+            self.packages.create(period=period)
+
+
     class Meta:
         verbose_name = "Institución de Educación Superior"
         verbose_name_plural = "Instituciones de Educación Superior"

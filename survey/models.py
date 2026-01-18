@@ -11,18 +11,18 @@ class Survey(models.Model):
     period = models.ForeignKey(
         Period, on_delete=models.CASCADE, related_name='surveys')
     academic_instances = models.IntegerField(
-        verbose_name='Instancias académicas')
+        verbose_name='Instancias académicas', blank=True, null=True)
     admin_instances = models.IntegerField(
-        verbose_name='Instancias administrativas')
+        verbose_name='Instancias administrativas', blank=True, null=True)
     sectors = models.ManyToManyField(
         Sector, related_name='surveys',
         verbose_name='Sectores atendidos')
     media_plans = models.IntegerField(
-        verbose_name='Planes a nivel medio superior')
+        verbose_name='Planes a nivel medio superior', blank=True, null=True)
     superior_plans = models.IntegerField(
-        verbose_name='Planes a nivel superior')
+        verbose_name='Planes a nivel superior', blank=True, null=True)
     postgraduate_plans = models.IntegerField(
-        verbose_name='Planes a nivel posgrado')
+        verbose_name='Planes a nivel posgrado', blank=True, null=True)
 
     def __str__(self):
         return f"Survey for {self.institution.name} during {self.period.name}"

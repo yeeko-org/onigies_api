@@ -7,7 +7,7 @@ class InitStatus:
             # is_public, open_editor, is_deleted
             ("draft", "register", "Borrador",
                 "blue", "edit_note", False, True, False, 8),
-            ("created", "register", "Creado (para revisarse)",
+            ("created", "register", "Registrado (para revisarse)",
                 "green", "pending_actions", False, True, False, 6),
             ("need_changes", "register", "Requiere cambios",
                 "orange", "new_releases", False, False, False, 2),
