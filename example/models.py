@@ -46,7 +46,7 @@ class GoodPracticePackage(models.Model):
     comments = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Paquete de Buenas Prácticas - {self.institution.name} - {self.period.name}"
+        return f"Paquete de Buenas Prácticas - {self.institution.name} - {self.period.year}"
 
     class Meta:
         verbose_name = "Envío de Buenas Prácticas"
@@ -58,16 +58,36 @@ class GoodPractice(models.Model):
         GoodPracticePackage, on_delete=models.CASCADE,
         related_name='good_practices')
     axis = models.ForeignKey(
-        Axis, on_delete=models.CASCADE, related_name='good_practices')
+        Axis, blank=True, null=True,
+        on_delete=models.CASCADE, related_name='good_practices')
     component = models.ForeignKey(
-        Component, on_delete=models.CASCADE, related_name='good_practices')
+        Component, blank=True, null=True,
+        on_delete=models.CASCADE, related_name='good_practices')
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     results = models.TextField(blank=True, null=True)
     final_value = models.IntegerField(blank=True, null=True)
+    status_register = models.ForeignKey(
+        StatusControl, on_delete=models.CASCADE, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        is_create = self._state.adding
+        print("is_create:", is_create)
+        super().save(*args, **kwargs)
+        if is_create:
+            all_features = Feature.objects.all()
+            for feature in all_features:
+                FeatureGoodPractice.objects.create(
+                    good_practice=self,
+                    feature=feature,
+                )
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = "Buena Práctica"
+        verbose_name_plural = "Buenas Prácticas"
 
 
 class FeatureGoodPractice(models.Model):
@@ -77,13 +97,12 @@ class FeatureGoodPractice(models.Model):
         Feature, on_delete=models.CASCADE, related_name='good_practice_values')
     has_attribute = models.BooleanField(default=False)
     final_option = models.ForeignKey(
-        FeatureOption, on_delete=models.CASCADE)
-    status_validation = models.ForeignKey(
-        StatusControl, on_delete=models.CASCADE, blank=True, null=True)
+        FeatureOption, on_delete=models.CASCADE, blank=True, null=True)
+    # status_validation = models.ForeignKey(
+    #     StatusControl, on_delete=models.CASCADE, blank=True, null=True)
     justification = models.TextField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
-    reviewers = models.ManyToManyField(
-        User, related_name='reviewed_feature_good_practices', blank=True)
+    reviewers = models.ManyToManyField(User, blank=True)
 
     def __str__(self):
         return f"{self.good_practice.name} - {self.feature.name}"

@@ -6,7 +6,8 @@ from api.views.auth.login_views import UserLoginAPIView
 
 from api.views.ps_schemas.views import CollectionViewSet
 from api.views.example.example_views import (
-    GoodPracticeViewSet, GoodPracticePackageViewSet)
+    GoodPracticeViewSet, GoodPracticePackageViewSet,
+    FeatureGoodPracticeViewSet)
 # from api.views.stop import StationViewSet
 # from api.views.report import StairReportViewSet, AscertainableViewSet
 
@@ -24,6 +25,7 @@ router = DefaultRouter()
 # )
 router.register(r'collection', CollectionViewSet, basename='collection')
 router.register(r'good_practice', GoodPracticeViewSet, basename='good_practice')
+router.register(r'feature_good_practice', FeatureGoodPracticeViewSet, basename='feature_good_practice')
 router.register(r'good_practice_package', GoodPracticePackageViewSet, basename='good_practice_package')
 
 urlpatterns = [

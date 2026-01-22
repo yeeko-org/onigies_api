@@ -16,7 +16,7 @@ class Survey(models.Model):
         verbose_name='Instancias administrativas', blank=True, null=True)
     sectors = models.ManyToManyField(
         Sector, related_name='surveys',
-        verbose_name='Sectores atendidos')
+        verbose_name='Sectores atendidos', blank=True)
     media_plans = models.IntegerField(
         verbose_name='Planes a nivel medio superior', blank=True, null=True)
     superior_plans = models.IntegerField(
@@ -25,7 +25,7 @@ class Survey(models.Model):
         verbose_name='Planes a nivel posgrado', blank=True, null=True)
 
     def __str__(self):
-        return f"Survey for {self.institution.name} during {self.period.name}"
+        return f"Survey - {self.institution.name} - {self.period}"
 
     class Meta:
         unique_together = ('institution', 'period')

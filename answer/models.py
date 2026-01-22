@@ -14,7 +14,7 @@ class ObservableResponse(models.Model):
         Survey, on_delete=models.CASCADE, related_name='observable_responses')
     observable = models.ForeignKey(
         Observable, on_delete=models.CASCADE, related_name='responses')
-    status_validation = models.ForeignKey(
+    status_register = models.ForeignKey(
         StatusControl, on_delete=models.CASCADE)
     value = models.BooleanField(blank=True, null=True)
 
@@ -26,13 +26,30 @@ class ObservableResponse(models.Model):
         verbose_name_plural = 'Respuestas observables'
 
 
+class ResponseStatus(models.Model):
+    observable_response = models.ForeignKey(
+        ObservableResponse, on_delete=models.CASCADE,
+        related_name='statuses')
+    question_group = models.ForeignKey(
+        QuestionGroup, on_delete=models.CASCADE)
+    status_register = models.ForeignKey(
+        StatusControl, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Comment on '{self.observable_response.observable.name}'"
+
+    class Meta:
+        verbose_name = 'Comentario de encuesta'
+        verbose_name_plural = 'Comentarios de encuestas'
+
+
 class Comment(models.Model):
     observable_response = models.ForeignKey(
         ObservableResponse, on_delete=models.CASCADE, related_name='comments')
     question_group = models.ForeignKey(
         QuestionGroup, on_delete=models.CASCADE)
     text = models.TextField(verbose_name='Texto del comentario')
-    status_validation = models.ForeignKey(
+    status_register = models.ForeignKey(
         StatusControl, on_delete=models.CASCADE)
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='comments')
@@ -110,6 +127,9 @@ class BResponse(models.Model):
         BQuestion, on_delete=models.CASCADE, related_name='responses')
     academic_instances_complying = models.IntegerField(blank=True, null=True)
     admin_instances_complying = models.IntegerField(blank=True, null=True)
+    # status_register = models.ForeignKey(
+    #     StatusControl, on_delete=models.CASCADE,
+    #     related_name='a_responses')
 
     def __str__(self):
         return f"Response to '{self.question.text}'"
@@ -119,9 +139,6 @@ class BResponse(models.Model):
         verbose_name_plural = 'Respuestas a preguntas B'
 
 
-    status_validation = models.ForeignKey(
-        StatusControl, on_delete=models.CASCADE,
-        related_name='a_responses')
 
 
 class SpecialResponse(models.Model):

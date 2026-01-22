@@ -11,6 +11,8 @@ class Institution(models.Model):
     year_end = models.IntegerField(blank=True, null=True)
     is_public = models.BooleanField(
         blank=True, null=True, help_text="Es una institución pública?")
+    # is_testing = models.BooleanField(
+    #     default=False, help_text="¿Es una institución de prueba?")
 
     def __str__(self):
         return self.name
@@ -19,8 +21,8 @@ class Institution(models.Model):
         super().save(*args, **kwargs)
         periods = Period.objects.all()
         for period in periods:
-            self.surveys.create(period=period)
-            self.packages.create(period=period)
+            self.surveys.get_or_create(period=period)
+            self.packages.get_or_create(period=period)
 
 
     class Meta:
@@ -54,6 +56,9 @@ class User(AbstractUser):
     mini_editor = models.BooleanField(
         default=False, verbose_name='Servicio social',
         help_text='Puede modificar ubicaciones y otros detalles')
+    institution = models.ForeignKey(
+        Institution, on_delete=models.CASCADE, blank=True, null=True,
+        related_name='users')
 
     def get_full_name(self):
         if self.first_name and self.last_name:

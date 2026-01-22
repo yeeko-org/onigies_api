@@ -18,16 +18,16 @@ python3 -m venv onigies
 - Iniciar el entorno virtual (venv) en la carpeta colocada
 ```
 # en Windows
-.\escaleras\Scripts\Activate.ps1
+.\onigies\Scripts\Activate.ps1
 # o en Linux/Mac
-source escaleras/bin/activate
+source onigies/bin/activate
 ```
 
 ## Variables de entorno
-- Crear un archivo .env en la carpeta dev\ocamis con las variables de entorno necesarias (puedes basarte en el archivo .env.example)
+- Crear un archivo .env en la carpeta dev\onigies con las variables de entorno necesarias (puedes basarte en el archivo .env.example)
 
 ## Instalación de paquetes requeridos
-- Instalar los paquetes requeridos para el sistema en la carpeta dev\ocamis.  (Esto viene en el archivo requirements.txt)
+- Instalar los paquetes requeridos para el sistema en la carpeta dev\onigies.  (Esto viene en el archivo requirements.txt)
 ```bash
 pip install -r requirements.txt
 ```
