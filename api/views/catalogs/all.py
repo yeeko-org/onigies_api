@@ -7,7 +7,7 @@ from rest_framework import permissions
 
 from ies.models import Institution, Period, StatusControl
 from indicator.models import Axis, Component, Observable, Sector
-from example.models import Feature
+from example.models import Feature, FeatureOption
 from question.models import AOption
 from ps_schema.models import Level, Collection, FilterGroup
 from api.views.catalogs.serializers import (
@@ -24,7 +24,8 @@ from api.views.indicator.serializers import (
     ObservableSerializer,
     SectorSerializer,
 )
-from api.views.example.serializers import FeatureSerializer
+from api.views.example.serializers import (
+    FeatureSerializer, FeatureOptionSerializer)
 from api.views.question.serializers import AOptionSerializer
 
 class CatalogsView(APIView):
@@ -37,7 +38,8 @@ class CatalogsView(APIView):
             #     User.objects.all(), many=True).data,
             "period": PeriodSerializer(
                 Period.objects.all(), many=True).data,
-            "institution": [],
+            "institution": InstitutionSerializer(
+                Institution.objects.all(), many=True).data,
 
             "status_control": StatusControlSerializer(
                 StatusControl.objects.all(), many=True).data,
@@ -59,11 +61,12 @@ class CatalogsView(APIView):
 
             "feature": FeatureSerializer(
                 Feature.objects.all(), many=True).data,
+            "feature_option": FeatureOptionSerializer(
+                FeatureOption.objects.all(), many=True).data,
             "a_option": AOptionSerializer(
                 AOption.objects.all(), many=True).data,
         }
-        if self.request.user.is_authenticated:
-            catalogs["institution"] = InstitutionSerializer(
-                Institution.objects.all(), many=True).data,
+        if not self.request.user.is_authenticated:
+            catalogs["institution"] = []
 
         return Response(catalogs)

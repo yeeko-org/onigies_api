@@ -7,10 +7,11 @@ class IesConfig(AppConfig):
 
 
     def ready(self) -> None:
-        from .initial_data import InitStatus
+        from ies.initial_data import InitStatus, InitPeriod
         _ready = super().ready()
         if 'migrate_initial_data' in sys.argv:
             print('Cargando datos iniciales de work_flux...')
             InitStatus()
+            InitPeriod()
             print('Datos iniciales cargados.')
         return _ready

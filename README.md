@@ -120,3 +120,7 @@ python manage.py runserver
 
 
 
+Para hacer un respaldo de la base de datos (solo public)
+```bash
+pg_dump --file "D:\\databases\\onigies_3_local_public_25_01_26.sql" --host "localhost" --port "5434" --username "postgres" --password --format=c --large-objects --verbose --schema "public" --dbname "onigies-local"
+```

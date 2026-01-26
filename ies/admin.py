@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Institution, StatusControl
+from django.contrib.auth.admin import UserAdmin
+from ies.models import Institution, StatusControl, User
 from survey.models import Survey
 from example.models import GoodPracticePackage
 
@@ -33,3 +34,30 @@ class StatusControlAdmin(admin.ModelAdmin):
         "color", "icon", "priority"]
     list_editable = ["order", "color", "icon", "priority"]
     list_filter = ["group"]
+
+
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    model = User
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        (None, {'fields': ('phone', 'full_editor')}),
+    )
+    fieldsets = (
+        (None, {'fields': ('username', 'password', 'institution')}),
+        ('Información personal', {'fields': (
+            'first_name', 'last_name', 'email', 'phone')}),
+        ('Permissions', {
+            'fields': ('is_superuser', 'is_staff', 'full_editor', 'is_active'),
+        }),
+        ('Groups', {'fields': ('groups',)}),
+        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+    )
+    # ) + UserAdmin.fieldsets
+    list_display = (
+        'email', 'first_name', 'last_name',
+        'is_active', 'full_editor', 'is_staff', 'institution')
+    search_fields = ('username', 'email', 'first_name', 'last_name')
+    ordering = ('-is_active', 'email')
+    list_filter = (
+        'is_staff', 'is_superuser', 'is_active', 'groups', 'full_editor')
+

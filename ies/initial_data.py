@@ -1,4 +1,4 @@
-from .models import StatusControl
+from .models import StatusControl, Period
 
 
 class InitStatus:
@@ -6,17 +6,24 @@ class InitStatus:
         init_status = [
             # is_public, open_editor, is_deleted
             ("draft", "register", "Borrador",
-                "blue", "edit_note", False, True, False, 8),
-            ("created", "register", "Registrado (para revisarse)",
-                "green", "pending_actions", False, True, False, 6),
+                "blue", "edit_note", False, 'ies', False, 8),
+            ("created", "register", "Enviado (para revisarse)",
+                "green", "pending_actions", True, 'validator', False, 6),
             ("need_changes", "register", "Requiere cambios",
-                "orange", "new_releases", False, False, False, 2),
+                "orange", "new_releases", False, 'ies', False, 2),
             ("need_new_checking", "register", "Requiere nueva revisión",
-                "pink", "report_gmailerrorred", False, True, False, 4),
+                "pink", "report_gmailerrorred", False, 'validator', False, 4),
             ("approved", "register", "Aprobado",
-                "green", "done_all", True, False, False, 16),
+                "green", "done_all", True, 'ies', False, 16),
             ("discarded", "register", "Descartado",
-                "red", "heart_broken", False, True, False, 10),
+                "red", "heart_broken", True, 'ies', False, 10),
+
+            # ("sent_to_validation", "sending", "Enviado a validación",
+            #     "green", "send", False, False, False, 22),
+            # ("validation_in_process", "validation", "Validación en proceso",
+            #     "blue", "hourglass_top", False, False, False, 42),
+            # ("validated", "validation", "Validado",
+            #     "green", "how_to_reg", True, False, False, 44),
         ]
         order = -1
         for data in init_status:
@@ -27,9 +34,10 @@ class InitStatus:
             public_name = data[2]
             color = data[3]
             icon = data[4]
-            is_public = data[5]
-            open_editor = data[6]
-            is_deleted = data[7]
+            is_final = data[5]
+            # open_editor = data[6]
+            role = data[6]
+            # is_deleted = data[7]
             try:
                 priority = data[8]
             except IndexError:
@@ -45,15 +53,22 @@ class InitStatus:
             status.public_name = public_name
             status.color = color
             status.icon = icon
-            status.is_public = is_public
+            status.is_final = is_final
             order += 2
             if group == "register" and order < 20:
                 order = 20
             if group == "location" and order < 40:
                 order = 40
             status.order = order
-            status.open_editor = open_editor
-            status.is_deleted = is_deleted
+            # status.open_editor = open_editor
+            status.role = role
+            # status.is_deleted = is_deleted
             status.priority = priority
             status.description = description
             status.save()
+
+
+class InitPeriod:
+    def __init__(self):
+        Period.objects.get_or_create(year=2025)
+

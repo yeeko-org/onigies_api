@@ -1,12 +1,14 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+import uuid as uuid_lib
 
 
 class Institution(models.Model):
 
     name = models.CharField(max_length=255, help_text="Nombre completo")
     logo = models.ImageField(upload_to="ies", blank=True, null=True)
-    acronym = models.CharField(max_length=50, help_text="Siglas únicas")
+    acronym = models.CharField(
+        max_length=50, unique=True, verbose_name="Siglas únicas")
     year_start = models.IntegerField(blank=True, null=True)
     year_end = models.IntegerField(blank=True, null=True)
     is_public = models.BooleanField(
@@ -14,16 +16,18 @@ class Institution(models.Model):
     # is_testing = models.BooleanField(
     #     default=False, help_text="¿Es una institución de prueba?")
 
-    def __str__(self):
-        return self.name
-
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         periods = Period.objects.all()
         for period in periods:
             self.surveys.get_or_create(period=period)
-            self.packages.get_or_create(period=period)
+            package, created = self.packages.get_or_create(period=period)
+            if created:
+                package.status_register_id = 'draft'
+                package.save()
 
+    def __str__(self):
+        return self.acronym
 
     class Meta:
         verbose_name = "Institución de Educación Superior"
@@ -53,6 +57,8 @@ class User(AbstractUser):
         default=False, verbose_name='Es capturista',
         help_text='Puede agregar notas, comentarios a los registros,'
                   'pero no tiene todos los permisos')
+    password_changed = models.BooleanField(
+        default=False, verbose_name='Contraseña cambiada')
     mini_editor = models.BooleanField(
         default=False, verbose_name='Servicio social',
         help_text='Puede modificar ubicaciones y otros detalles')
@@ -80,8 +86,34 @@ class User(AbstractUser):
         return self.is_superuser or self.is_staff
 
 
+class InvitationToken(models.Model):
+    key = models.UUIDField(
+        primary_key=True, default=uuid_lib.uuid4, editable=False)
+    email = models.EmailField(
+        verbose_name="Correo electrónico", blank=True, null=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True, verbose_name="Creado")
+    viewed_at = models.DateTimeField(
+        verbose_name="Fecha en que se vio", blank=True, null=True)
+    used_at = models.DateTimeField(
+        verbose_name="Fecha en que se usó",
+        blank=True, null=True)
+    user = models.ForeignKey(
+        User, blank=True, null=True, on_delete=models.CASCADE)
+    institution = models.ForeignKey(
+        Institution, blank=True, null=True, on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = "Token de Invitación"
+        verbose_name_plural = "Tokens de Invitación"
+
+    def __str__(self):
+        return "%s - %s" % (self.institution, self.key)
+
+
 class Period(models.Model):
-    year = models.IntegerField(primary_key=True, help_text="Año")
+    year = models.IntegerField(
+        primary_key=True, help_text="Año", editable=False)
     explanation = models.TextField(
         verbose_name="Recuento de fechas", blank=True, null=True)
     good_practices_published = models.BooleanField(
@@ -102,6 +134,7 @@ class Period(models.Model):
 
 GROUP_CHOICES = [
     ("register", "Registro"),
+    ("sending", "Envío"),
     ("validation", "Validación"),
 ]
 ROLE_CHOICES = [

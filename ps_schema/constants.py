@@ -71,7 +71,22 @@ all_collections = {
             "name": "Característica a calificar",
             "plural_name": "Características a calificar",
             "model_name": "Feature",
+            "level": "category_type",
+        },
+        {
+            "snake_name": "feature_option",
+            "name": "Opción de característica",
+            "plural_name": "Opciones de características",
+            "model_name": "FeatureOption",
             "level": "category_subtype",
+        },
+        {
+            "snake_name": "good_practice_package",
+            "name": "Envío de buenas prácticas",
+            "plural_name": "Envíos de buenas prácticas",
+            "model_name": "GoodPracticePackage",
+            "level": "primary",
+            "open_insertion": False,
         },
         {
             "snake_name": "good_practice",
@@ -79,6 +94,18 @@ all_collections = {
             "plural_name": "Buenas prácticas",
             "model_name": "GoodPractice",
             "level": "primary",
+            "all_filters": [
+                { "filter_name": "institutions", "hidden": False },
+            ],
+            "open_insertion": False,
+        },
+        {
+            "snake_name": "feature_good_practice",
+            "name": "Relación característica - buena práctica",
+            "plural_name": "Relaciones característica - buena práctica",
+            "model_name": "FeatureGoodPractice",
+            "level": "primary",
+            "open_insertion": False,
         },
     ],
     "question": [
@@ -132,7 +159,8 @@ filter_groups = [
         "key_name": "features",
         "name": "Característica",
         "plural_name": "Características",
-        "category_subtype": "feature",
+        "category_type": "feature",
+        "category_subtype": "feature_option",
     },
     {
         "key_name": "a_options",

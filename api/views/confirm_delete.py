@@ -7,8 +7,11 @@ from utils.register_merge import related_objects_report
 
 # class CustomDeleteMixin(viewsets.ModelViewSet):
 class CustomDeleteMixin:
+    disable_protection: bool = False
 
     def destroy(self, request, *args, **kwargs):
+        if self.disable_protection:
+            return super().destroy(request, *args, **kwargs)  # type: ignore
         instance = self.get_object()  # type: ignore
 
         report_data = []

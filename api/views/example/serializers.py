@@ -3,6 +3,7 @@ from rest_framework import serializers
 from example.models import (
     Feature, GoodPractice, FeatureOption, FeatureGoodPractice,
     GoodPracticePackage, Evidence)
+from api.views.ies.serializers import InstitutionSimpleSerializer
 
 
 class EvidenceSerializer(serializers.ModelSerializer):
@@ -52,7 +53,23 @@ class GoodPracticeFullSerializer(GoodPracticeSerializer):
 
 
 class GoodPracticePackageSerializer(serializers.ModelSerializer):
+    good_practices_count = serializers.SerializerMethodField()
+    institution_full = InstitutionSimpleSerializer(
+        read_only=True, source='institution')
+
+    def get_good_practices_count(self, obj):
+        return obj.good_practices.count()
+
+    class Meta:
+        model = GoodPracticePackage
+        fields = '__all__'
+
+
+class GoodPracticePackageFullSerializer(serializers.ModelSerializer):
     good_practices = GoodPracticeFullSerializer(many=True, read_only=True)
+    institution_full = InstitutionSimpleSerializer(
+        read_only=True, source='institution')
+
 
     class Meta:
         model = GoodPracticePackage

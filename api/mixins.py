@@ -74,6 +74,13 @@ class CreateMix(
     pass
 
 
+class CreateRetrieveMix(
+        mixins.CreateModelMixin,
+        mixins.RetrieveModelMixin,
+        MultiSerializerViewSet):
+    pass
+
+
 class ListCreateAPIView(
         generics.ListCreateAPIView,
         MultiSerializerViewSet):

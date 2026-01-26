@@ -19,6 +19,7 @@ class Feature(models.Model):
     class Meta:
         verbose_name = "Característica a calificar"
         verbose_name_plural = "Características a calificar"
+        ordering = ['order']
 
 
 class FeatureOption(models.Model):
@@ -41,14 +42,24 @@ class GoodPracticePackage(models.Model):
         Institution, on_delete=models.CASCADE, related_name='packages')
     period = models.ForeignKey(
         Period, on_delete=models.CASCADE, related_name='packages')
-    status_sending = models.ForeignKey(
+    has_good_practices = models.BooleanField(
+        blank=True, null=True, verbose_name="Tiene buenas prácticas")
+    status_register = models.ForeignKey(
         StatusControl, on_delete=models.CASCADE, blank=True, null=True)
+    sent_at = models.DateTimeField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        print("Saving GoodPracticePackage...", self.has_good_practices)
+        if self.has_good_practices == False:
+            self.status_register_id = 'discarded'
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Paquete de Buenas Prácticas - {self.institution.name} - {self.period.year}"
 
     class Meta:
+        ordering = ['-period__year', 'institution__acronym']
         verbose_name = "Envío de Buenas Prácticas"
         verbose_name_plural = "Envío de Buenas Prácticas"
 
@@ -66,9 +77,12 @@ class GoodPractice(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     results = models.TextField(blank=True, null=True)
+    start_year = models.IntegerField(blank=True, null=True)
+    end_year = models.IntegerField(blank=True, null=True)
     final_value = models.IntegerField(blank=True, null=True)
     status_register = models.ForeignKey(
         StatusControl, on_delete=models.CASCADE, blank=True, null=True)
+    comments = models.TextField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         is_create = self._state.adding
@@ -88,6 +102,7 @@ class GoodPractice(models.Model):
     class Meta:
         verbose_name = "Buena Práctica"
         verbose_name_plural = "Buenas Prácticas"
+        ordering = ['pk']
 
 
 class FeatureGoodPractice(models.Model):

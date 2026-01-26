@@ -133,12 +133,20 @@ class InitCollections:
                 model_name = collection['model_name']
                 # new_collection.level = levels_dict[collection['level']]
                 level = levels_dict.get(collection.get('level', None), None)
-                new_collection, is_new = Collection.objects.get_or_create(
-                    snake_name=collection['snake_name'],
-                    app_label=app_label, level=level)
+                try:
+                    is_new = False
+                    new_collection = Collection.objects.get(
+                        snake_name=collection['snake_name'],
+                        app_label=app_label)
+                except Collection.DoesNotExist:
+                    is_new = True
+                    new_collection = Collection(
+                        snake_name=collection['snake_name'],
+                        app_label=app_label, level=level)
                 my_model = apps.get_model(app_label, model_name)
                 meta_data = my_model._meta
 
+                new_collection.level = level
                 new_collection.name = collection.get(
                     'name', meta_data.verbose_name)
 
@@ -153,11 +161,11 @@ class InitCollections:
                 new_collection.order = order_base + order
                 new_collection.all_filters = collection.get('all_filters', [])
                 new_collection.cat_params = collection.get('cat_params', {})
+                new_collection.open_insertion = collection.get('open_insertion')
+                # print(new_collection.name, new_collection.open_insertion)
                 if is_new:
                     new_collection.icon = collection.get('icon', None)
                     new_collection.color = collection.get('color', None)
-                    new_collection.open_insertion = collection.get(
-                        'open_insertion', None)
                     new_collection.xls_export = collection.get('xls_export', False)
                 new_collection.save()
                 # print(f"Order: {order_base + order}\n{defaults}")

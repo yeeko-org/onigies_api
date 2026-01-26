@@ -13,6 +13,9 @@ class Command(BaseCommand):
             {
                 "number": 1,
                 "name": "Igualdad de género",
+                "icon": "add",
+                "color": "purple",
+                "short_name": "Igualdad",
                 "components": [
                     {
                         "name": "Normas y políticas",
@@ -86,6 +89,9 @@ class Command(BaseCommand):
             {
                 "number": 2,
                 "name": "Inclusión y no discriminación",
+                "icon": "self_improvement",
+                "color": "indigo",
+                "short_name": "Inclusión",
                 "components": [
                     {
                         "name": "Normas y políticas institucionales y académicas",
@@ -123,6 +129,9 @@ class Command(BaseCommand):
             {
                 "number": 3,
                 "name": "Cuidados corresponsables",
+                "icon": "baby_changing_station",
+                "color": "deep-purple",
+                "short_name": "Cuidados",
                 "components": [
                     {
                         "name": "Normas y políticas institucionales",
@@ -155,6 +164,9 @@ class Command(BaseCommand):
             {
                 "number": 4,
                 "name": "Una vida libre de discriminaciones y violencias",
+                "icon": "volunteer_activism",
+                "color": "pink",
+                "short_name": "Vida libre",
                 "components": [
                     {
                         "name": "Normas y políticas institucionales",
@@ -234,7 +246,12 @@ class Command(BaseCommand):
                 for axis_data in data:
                     axis, created = Axis.objects.get_or_create(
                         order=axis_data["number"],
-                        defaults={"name": axis_data["name"]}
+                        defaults={
+                            "name": axis_data["name"],
+                            "icon": axis_data["icon"],
+                            "color": axis_data["color"],
+                            "short_name": axis_data["short_name"],
+                        }
                     )
                     if created:
                         self.stdout.write(
