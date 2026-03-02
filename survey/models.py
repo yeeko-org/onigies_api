@@ -95,9 +95,9 @@ class PopulationQuantity(models.Model):
     no_apply = models.BooleanField(default=False, verbose_name="No Aplica")
     name = models.CharField(max_length=255, verbose_name='Nombre del sector')
     number_men = models.PositiveIntegerField(
-        verbose_name='Número de hombres')
+        verbose_name='Número de hombres', blank=True, null=True)
     number_women = models.PositiveIntegerField(
-        verbose_name='Número de mujeres')
+        verbose_name='Número de mujeres', blank=True, null=True)
 
     def __str__(self):
         return f"{self.sector.name}: {self.number_men} hombres, {self.number_women} mujeres"
