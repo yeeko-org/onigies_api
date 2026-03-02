@@ -16,62 +16,6 @@ class ExportXlsMixin(ModelViewSet):
     action_add_file_param: str = ""
     # xls_name: str = "Export"
     xls_attrs: list = []
-    add_locations = False
-    location_attrs: list = [
-        {
-            "name": "ID de ubicación principal",
-            "width": 5,
-            "field": "location_id",
-        },
-        {
-            "name": "ID de Entidad",
-            "width": 4,
-            "field": "state__inegi_code",
-            "subquery": "locations"
-        },
-        {
-            "name": "Entidad",
-            "width": 25,
-            "field": "state__short_name",
-            "subquery": "locations"
-        },
-        {
-            "name": "ID de Municipio",
-            "width": 4,
-            "field": "municipality__inegi_code",
-            "subquery": "locations"
-        },
-        {
-            "name": "Municipio",
-            "width": 25,
-            "field": "municipality__name",
-            "subquery": "locations"
-        },
-        {
-            "name": "ID de Localidad",
-            "width": 4,
-            "field": "locality__inegi_code",
-            "subquery": "locations"
-        },
-        {
-            "name": "Localidad",
-            "width": 25,
-            "field": "locality__name",
-            "subquery": "locations"
-        },
-        {
-            "name": "Latitud",
-            "width": 12,
-            "field": "latitude",
-            "subquery": "locations"
-        },
-        {
-            "name": "Longitud",
-            "width": 12,
-            "field": "longitude",
-            "subquery": "locations"
-        }
-    ]
     max_decimal: int = 2
 
     def get_query_for_export_xls(self):
@@ -88,8 +32,6 @@ class ExportXlsMixin(ModelViewSet):
         if not name:
             name = self.queryset.model._meta.verbose_name_plural
         attrs = getattr(self, 'xls_attrs', [])
-        if self.add_locations:
-            attrs = attrs + getattr(self, 'location_attrs', [])
         columns_width = [row.get('width', 20) for row in attrs]
         heades = [row.get('name', '') for row in attrs]
         # columns_width_pixel

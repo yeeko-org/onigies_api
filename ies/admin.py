@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from ies.models import Institution, StatusControl, User
+from ies.models import (
+    Institution, StatusControl, User, PasswordRecoveryToken,
+)
 from survey.models import Survey
 from example.models import GoodPracticePackage
 
@@ -27,6 +29,23 @@ class InstitutionAdmin(admin.ModelAdmin):
     inlines = [SurveyInline, GoodPracticePackageInline]
 
 
+@admin.register(PasswordRecoveryToken)
+class PasswordRecoveryTokenAdmin(admin.ModelAdmin):
+    list_display = [
+        'user', 'created_at', 'expires_at',
+        'used_at', 'is_valid_display',
+    ]
+    list_filter = ['created_at']
+    search_fields = ['user__email', 'user__username']
+    readonly_fields = [
+        'key', 'user', 'created_at', 'expires_at', 'used_at',
+    ]
+
+    @admin.display(boolean=True, description='¿Válido?')
+    def is_valid_display(self, obj):
+        return obj.is_valid()
+
+
 @admin.register(StatusControl)
 class StatusControlAdmin(admin.ModelAdmin):
     list_display = [
@@ -40,14 +59,14 @@ class StatusControlAdmin(admin.ModelAdmin):
 class CustomUserAdmin(UserAdmin):
     model = User
     add_fieldsets = UserAdmin.add_fieldsets + (
-        (None, {'fields': ('phone', 'full_editor')}),
+        (None, {'fields': ('phone', 'reviewer')}),
     )
     fieldsets = (
         (None, {'fields': ('username', 'password', 'institution')}),
         ('Información personal', {'fields': (
             'first_name', 'last_name', 'email', 'phone')}),
         ('Permissions', {
-            'fields': ('is_superuser', 'is_staff', 'full_editor', 'is_active'),
+            'fields': ('is_superuser', 'is_staff', 'reviewer', 'is_active'),
         }),
         ('Groups', {'fields': ('groups',)}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
@@ -55,9 +74,9 @@ class CustomUserAdmin(UserAdmin):
     # ) + UserAdmin.fieldsets
     list_display = (
         'email', 'first_name', 'last_name',
-        'is_active', 'full_editor', 'is_staff', 'institution')
+        'is_active', 'reviewer', 'is_staff', 'institution')
     search_fields = ('username', 'email', 'first_name', 'last_name')
     ordering = ('-is_active', 'email')
     list_filter = (
-        'is_staff', 'is_superuser', 'is_active', 'groups', 'full_editor')
+        'is_staff', 'is_superuser', 'is_active', 'groups', 'reviewer')
 

@@ -2,18 +2,20 @@ from django.urls import include, path
 from rest_framework import routers
 
 from api.views.catalogs.all import CatalogsView
-from api.views.ies.period_views import PeriodViewSet, InstitutionViewSet
-from api.views.example.example_views import (
-    FeatureViewSet, FeatureOptionViewSet, FeatureGoodPracticeViewSet)
-from api.views.indicator.indicator_views import (
-    AxisViewSet, ComponentViewSet, ObservableViewSet, SectorViewSet)
+from api.views.ies.period_views import PeriodViewSet, InstitutionCatalogViewSet
+from api.views.example import FeatureViewSet, FeatureOptionViewSet, FeatureGoodPracticeViewSet
+from api.views.indicator import AxisViewSet, ComponentViewSet, ObservableViewSet, SectorViewSet
 
 router = routers.DefaultRouter()
 
 # router.register(r'source', SourceViewSet, basename='catalog_source')
 # router.register(r'status_control', StatusControlViewSet, basename='catalog_status_control')
 router.register(r'period', PeriodViewSet, basename='period')
-router.register(r'institution', InstitutionViewSet, basename='institution')
+router.register(
+    r'institution',
+    InstitutionCatalogViewSet,
+    basename='institution_catalog'
+)
 router.register(r'feature', FeatureViewSet, basename='feature')
 router.register(r'feature_option', FeatureOptionViewSet, basename='feature_option')
 router.register(r'feature_good_practice', FeatureGoodPracticeViewSet, basename='feature_good_practice')

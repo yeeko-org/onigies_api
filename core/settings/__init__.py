@@ -27,6 +27,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 USE_X_FORWARDED_HOST = getenv_bool("USE_X_FORWARDED_HOST", True)
 HTTP_X_FORWARDED_HOST = os.getenv("HTTP_X_FORWARDED_HOST")
 
+FRONTEND_SITE_URL = os.getenv("FRONTEND_SITE_URL")
 # Application definition
 
 INSTALLED_APPS = [
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
     'survey',
     'answer',
     'ps_schema',
+    'email_send',
 ]
 
 MIDDLEWARE = [

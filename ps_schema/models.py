@@ -23,12 +23,6 @@ something = [{"key_name": "primary"}, "secondary", "relational"]
 
 class Collection(models.Model):
 
-    GROUP_CHOICES = [
-        ("register", "Registro"),
-        ("validation", "Validación"),
-        ('location', 'Ubicación'),
-    ]
-
     snake_name = models.CharField(
         max_length=225, primary_key=True)
     name = models.CharField(

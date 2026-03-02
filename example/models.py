@@ -1,6 +1,7 @@
 from django.db import models
 from indicator.models import Axis, Component
 from ies.models import User, Period, StatusControl, Institution
+from survey.models import Survey
 
 
 class Feature(models.Model):
@@ -42,17 +43,20 @@ class GoodPracticePackage(models.Model):
         Institution, on_delete=models.CASCADE, related_name='packages')
     period = models.ForeignKey(
         Period, on_delete=models.CASCADE, related_name='packages')
+    survey = models.ForeignKey(
+        Survey, on_delete=models.CASCADE, blank=True, null=True,
+        related_name='packages')
     has_good_practices = models.BooleanField(
         blank=True, null=True, verbose_name="Tiene buenas prácticas")
-    status_register = models.ForeignKey(
+    status_sending = models.ForeignKey(
         StatusControl, on_delete=models.CASCADE, blank=True, null=True)
     sent_at = models.DateTimeField(blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         print("Saving GoodPracticePackage...", self.has_good_practices)
-        if self.has_good_practices == False:
-            self.status_register_id = 'discarded'
+        if self.has_good_practices is False:
+            self.status_sending_id = 'discarded'
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -80,7 +84,7 @@ class GoodPractice(models.Model):
     start_year = models.IntegerField(blank=True, null=True)
     end_year = models.IntegerField(blank=True, null=True)
     final_value = models.IntegerField(blank=True, null=True)
-    status_register = models.ForeignKey(
+    status_sending = models.ForeignKey(
         StatusControl, on_delete=models.CASCADE, blank=True, null=True)
     comments = models.TextField(blank=True, null=True)
 
@@ -137,8 +141,7 @@ class Evidence(models.Model):
     file = models.FileField(upload_to='evidences/')
 
     def __str__(self):
-        return (f"Evidencia para "
-                f"{(self.feature_good_practice or self.good_practice)}")
+        return "Evidencia"
 
     class Meta:
         verbose_name = "Evidencia"

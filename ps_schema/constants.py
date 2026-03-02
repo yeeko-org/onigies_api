@@ -87,6 +87,11 @@ all_collections = {
             "model_name": "GoodPracticePackage",
             "level": "primary",
             "open_insertion": False,
+            "all_filters": [
+                # { "filter_name": "institutions", "hidden": False },
+                { "filter_name": "periods", "hidden": False },
+            ],
+            "cat_params": {"init_display": True, "hide_create": True},
         },
         {
             "snake_name": "good_practice",
@@ -98,6 +103,7 @@ all_collections = {
                 { "filter_name": "institutions", "hidden": False },
             ],
             "open_insertion": False,
+            "cat_params": { "init_display": True, "hide_create": True },
         },
         {
             "snake_name": "feature_good_practice",
@@ -113,13 +119,18 @@ all_collections = {
             "snake_name": "a_option",
             "model_name": "AOption",
             "level": "category_subtype",
+        },
+        {
+            "snake_name": "question_type",
+            "model_name": "QuestionType",
+            "level": "category_subtype",
         }
     ]
 
 }
 
 delete_collections = []
-delete_filter_groups = ["project_types"]
+delete_filter_groups = []
 
 all_available_actions = [
     "massive_delete",

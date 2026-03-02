@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <title>{% block title %}ONIGIES{% endblock %}</title>
+  <style>
+    /* ── Reset ── */
+    body, table, td, a {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { border: 0; height: auto; line-height: 100%;
+          outline: none; text-decoration: none; }
+    body { margin: 0 !important; padding: 0 !important; }
+
+    /* ── Variables de color ONIGIES/UNAM ── */
+    /* Primary : #003F8A  (azul UNAM)        */
+    /* Accent  : #7B3FA0  (violeta igualdad) */
+    /* Gold    : #C8A020  (dorado UNAM)      */
+    /* Light   : #F5F5F5                     */
+    /* Text    : #2C2C3E                     */
+
+    /* ── Contenedor principal ── */
+    .email-wrapper {
+      background-color: #F0F0F0;
+      padding: 32px 16px;
+    }
+    .email-container {
+      background-color: #FFFFFF;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 0 auto;
+      overflow: hidden;
+      border: 1px solid #DCDCDC;
+    }
+
+    /* ── Cabecera ── */
+    .email-header {
+      background-color: #003F8A;
+      padding: 28px 32px;
+      text-align: center;
+    }
+    .email-header .org-label {
+      color: #C8A020;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 11px;
+      font-weight: normal;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin: 0 0 6px 0;
+    }
+    .email-header h1 {
+      color: #FFFFFF;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 22px;
+      font-weight: bold;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+    .email-header .subtitle {
+      color: #B8C8E8;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      margin: 6px 0 0 0;
+    }
+
+    /* ── Franja de acento violeta ── */
+    .accent-bar {
+      background-color: #7B3FA0;
+      height: 4px;
+    }
+
+    /* ── Cuerpo ── */
+    .email-body {
+      padding: 36px 40px;
+      color: #2C2C3E;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .email-body h2 {
+      color: #003F8A;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 20px;
+      font-weight: bold;
+      margin: 0 0 16px 0;
+      border-bottom: 2px solid #E8ECF4;
+      padding-bottom: 10px;
+    }
+    .email-body p {
+      margin: 0 0 16px 0;
+      color: #2C2C3E;
+    }
+    .email-body .muted {
+      color: #666680;
+      font-size: 13px;
+    }
+
+    /* ── Botón principal ── */
+    .btn-primary {
+      display: inline-block;
+      background-color: #003F8A;
+      color: #FFFFFF !important;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 15px;
+      font-weight: bold;
+      text-decoration: none;
+      padding: 14px 32px;
+      border-radius: 6px;
+      margin: 8px 0 24px 0;
+      letter-spacing: 0.3px;
+    }
+    .btn-primary:hover {
+      background-color: #00307A;
+    }
+
+    /* ── Bloque de enlace alternativo ── */
+    .link-fallback {
+      background-color: #F5F5F8;
+      border-left: 4px solid #7B3FA0;
+      border-radius: 4px;
+      padding: 12px 16px;
+      margin: 16px 0;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .link-fallback a {
+      color: #003F8A;
+    }
+
+    /* ── Alerta / aviso ── */
+    .alert-box {
+      background-color: #FFF8E6;
+      border: 1px solid #C8A020;
+      border-radius: 4px;
+      padding: 12px 16px;
+      margin: 16px 0;
+      font-size: 13px;
+      color: #5A4500;
+    }
+
+    /* ── Pie de página ── */
+    .email-footer {
+      background-color: #F5F5F8;
+      border-top: 1px solid #DCDCDC;
+      padding: 20px 40px;
+      text-align: center;
+    }
+    .email-footer p {
+      color: #888899;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      line-height: 1.5;
+      margin: 0 0 4px 0;
+    }
+    .email-footer a { color: #003F8A; }
+
+    /* ── Responsive ── */
+    @media only screen and (max-width: 480px) {
+      .email-body { padding: 24px 20px; }
+      .email-footer { padding: 16px 20px; }
+      .email-header h1 { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="email-container">
+
+      <!-- Cabecera -->
+      <div class="email-header">
+        <p class="org-label">UNAM &mdash; Coordinación para la Igualdad de Género</p>
+        <h1>ONIGIES</h1>
+        <p class="subtitle">
+          Observatorio Nacional para la Igualdad de Género<br/>
+          en las Instituciones de Educación Superior
+        </p>
+      </div>
+
+      <!-- Franja de acento -->
+      <div class="accent-bar"></div>
+
+      <!-- Cuerpo -->
+      <div class="email-body">
+        {% block content %}{% endblock %}
+        <p>Si el botón no funciona, copia y pega el siguiente enlace
+          en tu navegador:</p>
+
+        <div class="link-fallback">
+          <a href="{{ destination_url }}">{{ destination_url }}</a>
+        </div>
+        {% block last_content %}{% endblock %}
+      </div>
+
+      <!-- Pie de página -->
+      <div class="email-footer">
+        <p>
+          Este correo fue enviado automáticamente por el sistema
+          ONIGIES. Por favor no respondas a este mensaje.
+        </p>
+        <p>
+          &copy; {% now "Y" %} UNAM
+        </p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

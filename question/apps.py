@@ -7,11 +7,11 @@ class QuestionConfig(AppConfig):
     name = "question"
 
     def ready(self) -> None:
-        from .initial_data import InitQuestionGroups
+        from .initial_data import InitQuestionTypes
 
         _ready = super().ready()
         if "migrate_initial_data" in sys.argv:
             print("Cargando datos iniciales de Question...")
-            InitQuestionGroups()
+            InitQuestionTypes()
             print("Datos iniciales cargados.")
         return _ready

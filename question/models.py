@@ -3,22 +3,7 @@ from django.db import models
 from indicator.models import Observable, Sector
 
 
-QUESTION_GROUPS = [
-    ('a_questions', 'Institucionalización', 'a_weight',
-    'AQuestion', 'AResponse'),
-    ('b_questions', 'Instancias', 'b_weight',
-    'BQuestion', 'BResponse'),
-    ('reach', 'Sectores', 'reach_weight',
-    'ReachQuestion', 'ReachResponse'),
-    ('plans', 'Planes de estudio', 'plan_weight',
-    'PlanQuestion', 'PlanResponse'),
-    ('special', 'Pregunta especial', 'special_weight',
-    'SpecialQuestion', 'SpecialResponse'),
-    ('population', 'Distribución de población', 'pop_weight',
-    None, None),
-]
-
-class QuestionGroup(models.Model):
+class QuestionType(models.Model):
     name = models.CharField(max_length=100, primary_key=True)
     weight_name = models.CharField(max_length=40)
     public_name = models.CharField(max_length=150)
@@ -31,8 +16,8 @@ class QuestionGroup(models.Model):
         return self.name
 
     class Meta:
-        verbose_name = "Grupo de preguntas"
-        verbose_name_plural = "Grupos de preguntas"
+        verbose_name = "Tipo de preguntas"
+        verbose_name_plural = "Tipos de preguntas"
 
 
 class AQuestion(models.Model):
@@ -82,6 +67,13 @@ class PlanQuestion(models.Model):
     observable = models.ForeignKey(Observable, on_delete=models.CASCADE)
     text = models.TextField()
 
+    def __str__(self):
+        return f"Pregunta de planes: {self.text} ({self.observable.name})"
+
+    class Meta:
+        verbose_name = "Pregunta de planes"
+        verbose_name_plural = "Preguntas de planes"
+
 
 class BQuestion(models.Model):
 
@@ -99,8 +91,8 @@ class BQuestion(models.Model):
         return f"Pregunta cuerpo: {self.text} ({self.observable.name})"
 
     class Meta:
-        verbose_name = "Pregunta de cuerpo"
-        verbose_name_plural = "Preguntas de cuerpo"
+        verbose_name = "Pregunta de transversalización"
+        verbose_name_plural = "Preguntas de transversalización"
 
 
 class SpecialQuestion(models.Model):

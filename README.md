@@ -12,15 +12,19 @@
 - Instalar venv
 - Crear en ambiente virtual, en este caso llamado 'escaleras' en la carpeta env:
 ```bash
-python3 -m venv onigies
+python3 -m venv [onigies || venv]
+````
+(En caso de tener distintas versiones de python instaladas, usar la versión 3.13)
+```bash
+python3.13 -m venv [onigies || venv]
 ````
 
 - Iniciar el entorno virtual (venv) en la carpeta colocada
 ```
 # en Windows
-.\onigies\Scripts\Activate.ps1
+.\[onigies || venv]\Scripts\Activate.ps1
 # o en Linux/Mac
-source onigies/bin/activate
+source [onigies || venv]/bin/activate
 ```
 
 ## Variables de entorno
@@ -59,11 +63,6 @@ DATABASE_NAME=db.sqlite3
        }
    ```
 
-**Dependencias adicionales necesarias:**
-```bash
-pip install Pillow  # Para campos de imagen
-pip install unidecode  # Para el comando import_stairs
-```
 
 ### Opción 2: PostgreSQL (Para producción o equipos que ya lo usan)
 
@@ -116,7 +115,7 @@ python manage.py collectstatic
 ```console
 python manage.py runserver
 ```
-- Acceder a la aplicación en el navegador web en la dirección http://localhost:8013
+- Acceder a la aplicación en el navegador web en la dirección http://localhost:8018
 
 
 

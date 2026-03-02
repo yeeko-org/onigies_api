@@ -1,6 +1,14 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 import uuid as uuid_lib
+
+YEAR_VALIDATORS = [MinValueValidator(2025), MaxValueValidator(2040)]
+
+TYPE_INSTANCES = (
+    ("academic", "Académica"),
+    ("admin", "Administrativa"),
+)
 
 
 class Institution(models.Model):
@@ -9,21 +17,43 @@ class Institution(models.Model):
     logo = models.ImageField(upload_to="ies", blank=True, null=True)
     acronym = models.CharField(
         max_length=50, unique=True, verbose_name="Siglas únicas")
-    year_start = models.IntegerField(blank=True, null=True)
-    year_end = models.IntegerField(blank=True, null=True)
+    year_start = models.IntegerField(
+        blank=True, null=True, validators=YEAR_VALIDATORS)
+    year_end = models.IntegerField(
+        blank=True, null=True, validators=YEAR_VALIDATORS)
     is_public = models.BooleanField(
         blank=True, null=True, help_text="Es una institución pública?")
-    # is_testing = models.BooleanField(
-    #     default=False, help_text="¿Es una institución de prueba?")
+    is_centralized = models.BooleanField(
+        blank=True, null=True,
+        help_text="Gobierno centralizado")
 
     def save(self, *args, **kwargs):
+        from indicator.models import Axis, Sector
+
         super().save(*args, **kwargs)
         periods = Period.objects.all()
+        if self.year_start:
+            periods = periods.filter(year__gte=self.year_start)
+        if self.year_end:
+            periods = periods.filter(year__lte=self.year_end)
+        all_axes = Axis.objects.all()
+        main_sectors = Sector.objects.filter(is_main=True)
         for period in periods:
-            self.surveys.get_or_create(period=period)
-            package, created = self.packages.get_or_create(period=period)
-            if created:
-                package.status_register_id = 'draft'
+            survey, s_created = self.surveys.get_or_create(period=period)
+            if s_created or survey.is_centralized is None:
+                survey.is_centralized = self.is_centralized
+                survey.save()
+            for axis in all_axes:
+                av, av_created = survey.axis_values.get_or_create(axis=axis)
+                if not av.status_register_id:
+                    av.status_register_id = 'pre_start'
+                    av.save()
+            for sector in main_sectors:
+                survey.population_quantities.get_or_create(sector=sector)
+
+            package, p_created = survey.packages.get_or_create(period=period)
+            if p_created:
+                package.status_sending_id = 'draft'
                 package.save()
 
     def __str__(self):
@@ -33,35 +63,36 @@ class Institution(models.Model):
         verbose_name = "Institución de Educación Superior"
         verbose_name_plural = "Instituciones de Educación Superior"
 
-# init_institutions = [
-#     {
-#         "name": "Instituto Politécnico Nacional",
-#         "acronym": "IPN",
-#         "is_public": True,
-#     },
-#     {
-#         "name": "Universidad Nacional Autónoma de México",
-#         "acronym": "UNAM",
-#         "is_public": True,
-#     },
-#     {
-#         "name": "Tecnológico de Monterrey",
-#         "acronym": "ITESM",
-#         "is_public": False,
-#     },
-# ]
+
+class Instance(models.Model):
+    institution = models.ForeignKey(
+        Institution, on_delete=models.CASCADE, related_name='instances')
+    name = models.CharField(
+        max_length=255, verbose_name='Nombre de la instancia')
+    acronym = models.CharField(
+        max_length=50, blank=True, null=True,
+        verbose_name='Siglas de la instancia')
+    type_instance = models.CharField(
+        max_length=20, choices=TYPE_INSTANCES,
+        verbose_name='Tipo de instancia')
+    order = models.IntegerField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.institution.acronym})"
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = 'Dependencia'
+        verbose_name_plural = 'Dependencias'
+
 
 class User(AbstractUser):
     phone = models.CharField(max_length=100, blank=True)
-    full_editor = models.BooleanField(
-        default=False, verbose_name='Es capturista',
-        help_text='Puede agregar notas, comentarios a los registros,'
-                  'pero no tiene todos los permisos')
+    reviewer = models.BooleanField(
+        default=False, verbose_name='Es revisora',
+        help_text='Puede verificar las respuestas y buenas prácticas')
     password_changed = models.BooleanField(
         default=False, verbose_name='Contraseña cambiada')
-    mini_editor = models.BooleanField(
-        default=False, verbose_name='Servicio social',
-        help_text='Puede modificar ubicaciones y otros detalles')
     institution = models.ForeignKey(
         Institution, on_delete=models.CASCADE, blank=True, null=True,
         related_name='users')
@@ -74,10 +105,10 @@ class User(AbstractUser):
         return self.username or self.email
 
     @property
-    def is_full_editor(self):
+    def is_reviewer(self):
         if self.is_anonymous:
             return False
-        return self.is_superuser or self.is_staff or self.full_editor
+        return self.is_superuser or self.is_staff or self.reviewer
 
     @property
     def is_admin(self):
@@ -101,7 +132,19 @@ class InvitationToken(models.Model):
     user = models.ForeignKey(
         User, blank=True, null=True, on_delete=models.CASCADE)
     institution = models.ForeignKey(
-        Institution, blank=True, null=True, on_delete=models.CASCADE)
+        Institution, blank=True, null=True,
+        on_delete=models.CASCADE, related_name='invitation_tokens')
+    reviewer = models.BooleanField(
+        default=False,
+        verbose_name="Es revisora",
+        help_text=(
+            "Solo aplica para invitaciones sin institución"
+        ),
+    )
+    is_staff = models.BooleanField(
+        default=False, verbose_name="Es staff")
+    is_superuser = models.BooleanField(
+        default=False, verbose_name="Es superusuario")
 
     class Meta:
         verbose_name = "Token de Invitación"
@@ -111,6 +154,57 @@ class InvitationToken(models.Model):
         return "%s - %s" % (self.institution, self.key)
 
 
+class PasswordRecoveryToken(models.Model):
+    EXPIRY_HOURS = 24
+
+    key = models.UUIDField(
+        primary_key=True,
+        default=uuid_lib.uuid4,
+        editable=False,
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='recovery_tokens',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(
+        verbose_name="Fecha en que se usó",
+        blank=True,
+        null=True,
+    )
+
+    def save(self, *args, **kwargs):
+        from django.utils import timezone
+        from datetime import timedelta
+        if not self.pk or not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(
+                hours=self.EXPIRY_HOURS
+            )
+        super().save(*args, **kwargs)
+
+    def is_valid(self):
+        from django.utils import timezone
+        return (
+            self.used_at is None
+            and timezone.now() < self.expires_at
+        )
+
+    def mark_used(self):
+        from django.utils import timezone
+        self.used_at = timezone.now()
+        self.save()
+
+    def __str__(self):
+        return f"{self.user.email} - {self.key}"
+
+    class Meta:
+        verbose_name = "Token de Recuperación"
+        verbose_name_plural = "Tokens de Recuperación"
+        ordering = ['-created_at']
+
+
 class Period(models.Model):
     year = models.IntegerField(
         primary_key=True, help_text="Año", editable=False)
@@ -118,9 +212,6 @@ class Period(models.Model):
         verbose_name="Recuento de fechas", blank=True, null=True)
     good_practices_published = models.BooleanField(
         verbose_name="Buenas prácticas publicadas", default=False)
-    # published_date = models.DateField(
-    #     null=True, blank=True,
-    #     verbose_name="Fecha de publicación del periodo")
     results_published = models.BooleanField(
         verbose_name="Resultados publicados", default=False)
 

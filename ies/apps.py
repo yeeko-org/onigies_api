@@ -3,6 +3,8 @@ import sys
 
 class IesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
+    verbose_name = 'IES'
+    verbose_name_plural = 'IES'
     name = 'ies'
 
 

@@ -163,7 +163,7 @@ class Command(BaseCommand):
             },
             {
                 "number": 4,
-                "name": "Una vida libre de discriminaciones y violencias",
+                "name": "Una vida libre de discriminaciones y violencia",
                 "icon": "volunteer_activism",
                 "color": "pink",
                 "short_name": "Vida libre",

@@ -1,7 +1,8 @@
-from .models import QuestionGroup
+from .models import QuestionType
 
 
-class InitQuestionGroups:
+class InitQuestionTypes:
+
     def __init__(self):
 
         initial_data = [
@@ -20,7 +21,7 @@ class InitQuestionGroups:
         ]
 
         for name, public, weight, m_question, m_response, weight_value in initial_data:
-            QuestionGroup.objects.update_or_create(
+            QuestionType.objects.update_or_create(
                 name=name,
                 defaults={
                     'public_name': public,

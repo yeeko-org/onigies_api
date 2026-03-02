@@ -1,6 +1,18 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import (
+    BasePermission, SAFE_METHODS)
 
 soft_actions = ["POST", "PATCH"]
+
+
+class IsReviewer(BasePermission):
+    """Requires the user to be a reviewer (or admin/staff).
+    Restricts access for all methods including GET.
+    """
+
+    def has_permission(self, request, view):
+        if request.user.is_anonymous:
+            return False
+        return request.user.is_reviewer
 
 
 class BaseReadOnlyPermission(BasePermission):
@@ -14,7 +26,6 @@ class BaseReadOnlyPermission(BasePermission):
         return self.has_write_permission(request, view)
 
     def has_write_permission(self, request, view):
-        """Override this method in subclasses"""
         raise NotImplementedError
 
 
@@ -28,7 +39,6 @@ class BaseObjectPermission(BaseReadOnlyPermission):
         return self.has_write_permission_object(request, view, obj)
 
     def has_write_permission_object(self, request, view, obj):
-        """Override this method in subclasses"""
         raise NotImplementedError
 
     def has_write_permission(self, request, view):
@@ -44,14 +54,14 @@ class BaseHardPermission(BaseObjectPermission):
             return True
         if request.user.is_anonymous:
             return False
-        if not request.user.is_full_editor:
+        if not request.user.is_reviewer:
             return False
         return self.has_write_permission_object(request, view, obj)
 
 
 class IsFullEditorOrReadOnly(BaseReadOnlyPermission):
     def has_write_permission(self, request, view):
-        return request.user.is_full_editor
+        return request.user.is_reviewer
 
 
 class IsAdminOrReadOnly(BaseReadOnlyPermission):
@@ -67,21 +77,7 @@ class IsEditorOrCreateOrRead(BaseHardPermission):
             return True
 
         if obj.status_validation.open_editor:
-            return request.user.is_full_editor
-
-        return request.user.is_admin
-
-
-class DynamicCatalogPermission(BaseHardPermission):
-
-    def has_write_permission_object(self, request, view, obj):
-
-        medium_actions = ["POST", "PATCH", "PUT"]
-        if request.method in medium_actions:
-            return True
-
-        if obj.status_validation.open_editor:
-            return request.user.is_full_editor
+            return request.user.is_reviewer
 
         return request.user.is_admin
 

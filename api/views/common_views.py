@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,7 +16,7 @@ class AdvancedConditionalFieldsViewMixin(viewsets.ModelViewSet):
     field_permissions = {
         'anonymous': [
             'status_register', 'comments', 'status_validation',
-            'status_location'],
+            'status_sending'],
         'authenticated': [],  # Fields to exclude for authenticated users
         'staff': [],  # Fields to exclude for staff users
     }

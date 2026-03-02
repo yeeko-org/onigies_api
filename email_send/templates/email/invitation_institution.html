@@ -1,0 +1,44 @@
+{% extends "email/base_email.html" %}
+
+{% block title %}Invitación ONIGIES — {{ institution.acronym }}{% endblock %}
+
+{% block content %}
+<h2>Invitación para registrar información</h2>
+
+<p>
+  Estimada persona responsable de
+  <strong>{{ institution.name }}</strong>:
+</p>
+
+<p>
+  La institución <strong>{{ institution.acronym }}</strong> ha sido
+  registrada en el sistema <strong>ONIGIES</strong> (Observatorio
+  Nacional para la Igualdad de Género en las Instituciones de
+  Educación Superior).
+</p>
+
+<p>
+  Para comenzar a capturar los datos correspondientes a tu
+  institución, accede al sistema haciendo clic en el siguiente
+  botón y completa tu registro:
+</p>
+
+<p style="text-align: center;">
+  <a href="{{ destination_url }}" class="btn-primary">
+    Registrarme
+  </a>
+</p>
+
+<div class="alert-box">
+  &#9432;&nbsp; Este enlace de invitación es de uso único.
+  Una vez que te hayas registrado, podrás acceder al sistema
+  con tu correo y contraseña.
+</div>
+{% endblock %}
+
+{% block last_content %}
+<p class="muted">
+  Si no esperabas este correo o crees que fue enviado por error,
+  puedes ignorarlo. Sin acción de tu parte, nada cambiará.
+</p>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "email/base_email.html" %}
+
+{% block title %}Invitación ONIGIES{% endblock %}
+
+{% block content %}
+<h2>Has sido invitado a ONIGIES</h2>
+
+<p>
+  Hola
+</p>
+
+<p>
+  Has recibido una invitación para registrarte como revisora en el sistema
+  <strong>ONIGIES</strong> (Observatorio Nacional para la Igualdad
+  de Género en las Instituciones de Educación Superior).
+</p>
+
+<p>
+  Haz clic en el siguiente botón para completar tu registro:
+</p>
+
+<p style="text-align: center;">
+  <a href="{{ destination_url }}" class="btn-primary">
+    Completar mi registro
+  </a>
+</p>
+
+<div class="alert-box">
+  &#9432;&nbsp; Este enlace de invitación es de uso único.
+  Una vez que te hayas registrado, podrás acceder al sistema
+  con tu correo y contraseña.
+</div>
+{% endblock %}
+
+{% block last_content %}
+<p class="muted">
+  Si no esperabas este correo o crees que fue enviado por error,
+  puedes ignorarlo. Sin acción de tu parte, nada cambiará.
+</p>
+{% endblock %}
