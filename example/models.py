@@ -39,10 +39,10 @@ class FeatureOption(models.Model):
 
 
 class GoodPracticePackage(models.Model):
-    institution = models.ForeignKey(
-        Institution, on_delete=models.CASCADE, related_name='packages')
-    period = models.ForeignKey(
-        Period, on_delete=models.CASCADE, related_name='packages')
+    # institution = models.ForeignKey(
+    #     Institution, on_delete=models.CASCADE, related_name='packages')
+    # period = models.ForeignKey(
+    #     Period, on_delete=models.CASCADE, related_name='packages')
     survey = models.ForeignKey(
         Survey, on_delete=models.CASCADE, blank=True, null=True,
         related_name='packages')
@@ -60,10 +60,11 @@ class GoodPracticePackage(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Paquete de Buenas Prácticas - {self.institution.name} - {self.period.year}"
+        return (f"Paquete de Buenas Prácticas - "
+                f"{self.survey.institution.acronym} - {self.survey.period.year}")
 
     class Meta:
-        ordering = ['-period__year', 'institution__acronym']
+        ordering = ['-survey__period__year', 'survey__institution__acronym']
         verbose_name = "Envío de Buenas Prácticas"
         verbose_name_plural = "Envío de Buenas Prácticas"
 

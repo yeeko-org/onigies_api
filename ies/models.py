@@ -51,8 +51,10 @@ class Institution(models.Model):
             for sector in main_sectors:
                 survey.population_quantities.get_or_create(sector=sector)
 
-            package, p_created = survey.packages.get_or_create(period=period)
-            if p_created:
+            has_packages = survey.packages.exists()
+            # package, p_created = survey.packages.get_or_create(period=period)
+            if not has_packages:
+                package = survey.packages.create()
                 package.status_sending_id = 'draft'
                 package.save()
 

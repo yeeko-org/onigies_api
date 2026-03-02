@@ -15,8 +15,8 @@ class InstitutionCatalogViewSet(BaseGenericViewSet):
     from django.db.models import Count
     queryset = Institution.objects.all()\
         .annotate(
-        good_practice_packages_count=Count('packages'),
-        good_practices_count=Count('packages__good_practices')
+        good_practice_packages_count=Count('surveys__packages'),
+        good_practices_count=Count('surveys__packages__good_practices')
     )\
         .distinct()
 

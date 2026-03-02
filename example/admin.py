@@ -16,7 +16,7 @@ class FeatureGoodPracticeInline(admin.StackedInline):
 @admin.register(GoodPractice)
 class GoodPracticeAdmin(admin.ModelAdmin):
     list_display = ('package', 'axis', 'name')
-    list_filter = ('package__period__year',)
+    list_filter = ('package__survey__period__year',)
     inlines = [FeatureGoodPracticeInline]
 
 
@@ -28,8 +28,8 @@ class GoodPracticeInline(admin.StackedInline):
 
 @admin.register(GoodPracticePackage)
 class GoodPracticePackageAdmin(admin.ModelAdmin):
-    list_display = ('period', 'institution')
-    search_fields = ('institution__name', 'institution__acronym')
-    list_filter = ('period__year',)
+    list_display = ('survey__period', 'survey__institution')
+    search_fields = ('survey__institution__name', 'survey__institution__acronym')
+    list_filter = ('survey__period__year',)
     inlines = [GoodPracticeInline]
 

@@ -2,7 +2,7 @@ from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-
+from django_filters import FilterSet, CharFilter, NumberFilter
 from api.views.action_file import ActionFileMixin
 from api.views.common_views import BaseGenericViewSet
 from api.views.example.serializers import GoodPracticeFullSerializer, GoodPracticeSerializer, EvidenceSerializer, \
@@ -57,17 +57,27 @@ class FeatureGoodPracticeViewSet(BaseGenericViewSet, ActionFileMixin):
         return action_serializer.get(self.action, self.serializer_class)
 
 
+class PackageFilter(FilterSet):
+
+    institution = NumberFilter(field_name='survey__institution')
+    period = NumberFilter(field_name='survey__period')
+
+    class Meta:
+        model = GoodPracticePackage
+        fields = {}
+
+
 class GoodPracticePackageViewSet(BaseGenericViewSet):
     queryset = GoodPracticePackage.objects.all()\
         .prefetch_related('good_practices')
     serializer_class = GoodPracticePackageFullSerializer
     search_fields = [
-        'period__year', 'institution__name', 'institution__acronym']
-    ordering_fields = ['id', 'period__year', 'institution__name']
-    filterset_fields = ['institution', 'period']
-
-    # pagination_class = CustomPagination
-    # filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+        'survey__period__year', 'survey__institution__name',
+        'survey__institution__acronym']
+    ordering_fields = [
+        'id', 'survey__period__year', 'survey__institution__name']
+    # filterset_fields = ['survey__institution', 'survey__period']
+    filterset_class = PackageFilter
 
     def get_serializer_class(self):
         action_serializer = {

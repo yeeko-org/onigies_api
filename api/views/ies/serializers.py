@@ -23,14 +23,16 @@ class SurveySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class SurveyFullSerializer(SurveySerializer):
-    axis_values = AxisValueSerializer(many=True, read_only=True)
-
-
 class GoodPracticePackageSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = GoodPracticePackage
         fields = '__all__'
+
+
+class SurveyFullSerializer(SurveySerializer):
+    axis_values = AxisValueSerializer(many=True, read_only=True)
+    packages = GoodPracticePackageSimpleSerializer(
+        many=True, read_only=True)
 
 
 class InstitutionSimpleSerializer(serializers.ModelSerializer):
@@ -59,8 +61,6 @@ class InstitutionSerializer(serializers.ModelSerializer):
 
 class InstitutionFullSerializer(serializers.ModelSerializer):
     surveys = SurveyFullSerializer(many=True, read_only=True)
-    packages = GoodPracticePackageSimpleSerializer(
-        many=True, read_only=True)
 
     class Meta:
         model = Institution
