@@ -2,7 +2,7 @@ from rest_framework import serializers
 from ies.models import Period, Institution
 from survey.models import Survey, AxisValue
 from example.models import GoodPracticePackage
-from api.views.common_serializers import InvitationTokenSimpleSerializer
+from api.views.common_serializers import InvitationTokenBaseSerializer
 
 
 class PeriodSimpleSerializer(serializers.ModelSerializer):
@@ -42,7 +42,7 @@ class InstitutionSimpleSerializer(serializers.ModelSerializer):
 
 
 class InstitutionDetailSerializer(serializers.ModelSerializer):
-    invitation_tokens = InvitationTokenSimpleSerializer(
+    invitation_tokens = InvitationTokenBaseSerializer(
         many=True, read_only=True)
 
     class Meta:

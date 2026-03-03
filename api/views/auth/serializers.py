@@ -1,7 +1,9 @@
+from django.db import transaction
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from api.views.common_serializers import InvitationTokenSimpleSerializer
+from api.views.common_serializers import InvitationTokenBaseSerializer
 from ies.models import User, InvitationToken
 from api.views.ies.serializers import (
     InstitutionFullSerializer, InstitutionSimpleSerializer)
@@ -106,8 +108,14 @@ class UserRegistrationSerializer(UserDataSerializer):
         # read_only_fields = UserDataSerializer.Meta.read_only_fields
 
 
+class PasswordRecoveryRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
 
-class InvitationTokenSerializer(serializers.ModelSerializer):
+    def validate_email(self, value):
+        return value.strip().lower()
+
+
+class InvitationTokenCheckSerializer(serializers.ModelSerializer):
     institution_full = InstitutionSimpleSerializer(
         read_only=True, source='institution')
 
@@ -116,20 +124,16 @@ class InvitationTokenSerializer(serializers.ModelSerializer):
         fields = ["email", "institution", "institution_full"]
 
 
-class PasswordRecoveryRequestSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+class InvitationTokenListSerializer(InvitationTokenBaseSerializer):
+    institution_full = InstitutionSimpleSerializer(
+        read_only=True, source='institution')
 
-    def validate_email(self, value):
-        return value.strip().lower()
-
-
-class InvitationTokenCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvitationToken
-        fields = [
-            'email', 'institution',
-            'reviewer', 'is_staff', 'is_superuser',
-        ]
+        fields = InvitationTokenBaseSerializer.Meta.fields + ['institution_full']
+
+
+class InvitationTokenCreateSerializer(InvitationTokenListSerializer):
 
     def validate(self, data):
         institution = data.get('institution')
@@ -142,15 +146,6 @@ class InvitationTokenCreateSerializer(serializers.ModelSerializer):
                 )
             })
         return data
-
-
-class InvitationTokenListSerializer(InvitationTokenSimpleSerializer):
-    institution_full = InstitutionSimpleSerializer(
-        read_only=True, source='institution')
-
-    class Meta:
-        model = InvitationToken
-        fields = InvitationTokenSimpleSerializer.Meta.fields + ['institution_full']
 
 
 class InvitationTokenDetailSerializer(InvitationTokenListSerializer):

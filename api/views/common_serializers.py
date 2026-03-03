@@ -3,7 +3,7 @@ from rest_framework import serializers
 from ies.models import InvitationToken
 
 
-class InvitationTokenSimpleSerializer(serializers.ModelSerializer):
+class InvitationTokenBaseSerializer(serializers.ModelSerializer):
     destination_url = serializers.SerializerMethodField()
 
     def get_destination_url(self, obj):
@@ -16,5 +16,5 @@ class InvitationTokenSimpleSerializer(serializers.ModelSerializer):
             'key', 'email', 'institution',
             'created_at', 'viewed_at', 'used_at',
             'reviewer', 'is_staff', 'is_superuser',
-            'destination_url',
+            'destination_url', 'email_sent',
         ]

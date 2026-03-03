@@ -26,9 +26,7 @@ def _send_invitation_email(token: InvitationToken):
     from api.views.auth.common_utils import get_destination_url
     from email_send.service import send_named_template_email
 
-    context = {
-        'destination_url': get_destination_url(token, 'register'),
-    }
+    context = {'destination_url': get_destination_url(token, 'register')}
     if token.institution:
         context['institution'] = token.institution
         template_name = 'email/invitation_institution.html'
@@ -84,6 +82,8 @@ class InvitationTokenViewSet(MultiSerializerCreateRetrieveMix):
         token = serializer.save()
         try:
             _send_invitation_email(token)
+            token.email_sent = True
+            token.save(update_fields=['email_sent'])
         except Exception:
             logger.exception(
                 "Error al enviar el correo de invitación para token %s",
@@ -103,16 +103,14 @@ class InvitationTokenViewSet(MultiSerializerCreateRetrieveMix):
         return Response(self.get_serializer(token).data)
 
     @action(
-        detail=True,
-        methods=['post'],
-        url_path='register',
-        url_name='register',
+        detail=True, methods=['post'],
+        url_path='register', url_name='register',
     )
     def register(self, request, pk=None):
         try:
-            token = InvitationToken.objects.select_related(
-                'institution'
-            ).get(pk=pk)
+            token = InvitationToken.objects\
+                .select_related('institution')\
+                .get(pk=pk)
         except InvitationToken.DoesNotExist:
             raise NotFound('Token de invitación no encontrado.')
 
@@ -127,8 +125,7 @@ class InvitationTokenViewSet(MultiSerializerCreateRetrieveMix):
         data = serializer.validated_data
 
         from ies.models import User
-        from rest_framework.authtoken.models import (
-            Token as AuthToken)
+        from rest_framework.authtoken.models import Token as AuthToken
 
         user = User(
             first_name=data['first_name'],

@@ -137,16 +137,15 @@ class InvitationToken(models.Model):
         Institution, blank=True, null=True,
         on_delete=models.CASCADE, related_name='invitation_tokens')
     reviewer = models.BooleanField(
-        default=False,
-        verbose_name="Es revisora",
-        help_text=(
-            "Solo aplica para invitaciones sin institución"
-        ),
-    )
+        default=False, verbose_name="Es revisora",
+        help_text="Solo aplica para invitaciones sin institución")
     is_staff = models.BooleanField(
         default=False, verbose_name="Es staff")
     is_superuser = models.BooleanField(
         default=False, verbose_name="Es superusuario")
+    email_sent = models.BooleanField(
+        default=False, verbose_name="Correo enviado",
+        help_text="El correo fue enviado exitosamente")
 
     class Meta:
         verbose_name = "Token de Invitación"
